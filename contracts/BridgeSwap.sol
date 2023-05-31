@@ -34,8 +34,6 @@ contract BridgeSwap {
     address public l2Token;
     address public l1Bridge;
 
-    uint32 l2Gas = 1300000;
-
     constructor()  {
     }
 

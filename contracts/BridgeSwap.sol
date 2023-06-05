@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { OnApprove } from "./OnApprove.sol";
 
 // Uncomment this line to use console.log
 import "hardhat/console.sol";
@@ -23,50 +24,124 @@ interface IIL1Bridge {
     ) external;
 }
 
-contract BridgeSwap {
+contract BridgeSwap is OnApprove {
     using SafeERC20 for IERC20;
 
-    address payable public owner;
+    //goerli address
+    address public ton = 0x68c1F9620aeC7F2913430aD6daC1bb16D8444F00;
+    address public wton = 0xe86fCf5213C785AcF9a8BFfEeDEfA9a2199f7Da6;
+    // address public l1Token = 0x68c1F9620aeC7F2913430aD6daC1bb16D8444F00;
+    address public l2Token = 0x7c6b91D9Be155A6Db01f749217d76fF02A7227F2;
+    address public l1Bridge = 0x7377F3D0F64d7a54Cf367193eb74a052ff8578FD;
 
-    address public ton;
-    address public wton;
-    address public l1Token;
-    address public l2Token;
-    address public l1Bridge;
+    bytes basicData;
 
-    constructor()  {
+    constructor() {
+        IERC20(ton).approve(
+            l1Bridge,
+            type(uint256).max
+        );
     }
 
-    function initialize(
-        address _ton,
-        address _wton,
-        address _l1Token,
-        address _l2Token,
-        address _l1Bridge
-    ) external {
-        ton = _ton;
-        wton = _wton;
-        l1Token = _l1Token;
-        l2Token = _l2Token;
-        l1Bridge = _l1Bridge;
+    // function initialize(
+    //     address _ton,
+    //     address _wton,
+    //     address _l1Token,
+    //     address _l2Token,
+    //     address _l1Bridge
+    // ) external {
+    //     ton = _ton;
+    //     wton = _wton;
+    //     l1Token = _l1Token;
+    //     l2Token = _l2Token;
+    //     l1Bridge = _l1Bridge;
+    // }
+
+    function onApprove(
+        address sender,
+        address spender,
+        uint256 amount,
+        bytes calldata data
+    ) external override returns (bool) {
+        require(msg.sender == address(ton) || msg.sender == address(wton), "only TON and WTON");
+        uint32 l2gas = _decodeApproveData(data);
+        if(msg.sender == address(ton)) {
+            _TONDeposit(
+                sender,
+                amount,
+                l2gas
+            );
+        } else if (msg.sender == address(wton)) {
+            _WTONDeposit(
+                sender,
+                amount,
+                l2gas
+            );
+        }
+
+        return true;
     }
 
-    function swapAndDeposit(
+    //1. approve or permit을 받고 L1 WTON -> L2 TON
+    //depositAmount = WTONAmount
+    function WTONDeposit (
         uint256 depositAmount,
         uint32 l2gas,
         bytes calldata data
     ) external {
-        uint256 wtonAmount = _toRAY(depositAmount);
+        uint256 tonAmount = _toWAD(depositAmount);
         uint256 allowanceAmount = IERC20(wton).allowance(msg.sender, address(this));
         console.log(allowanceAmount);
         console.log("-----------");
-        console.log(wtonAmount);
-        require(allowanceAmount >= wtonAmount, "wton exceeds allowance");
-        IERC20(wton).safeTransferFrom(msg.sender,address(this),wtonAmount);
-        IIWTON(wton).swapToTON(wtonAmount);
-        IERC20(ton).approve(l1Bridge,depositAmount);
+        console.log(depositAmount);
+        require(allowanceAmount >= depositAmount, "wton exceeds allowance");
+        IERC20(wton).safeTransferFrom(msg.sender,address(this),depositAmount);
+        IIWTON(wton).swapToTON(depositAmount);
+        uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
+        if(depositAmount > allowAmount) {
+            require(
+                IERC20(ton).approve(
+                    l1Bridge,
+                    type(uint256).max
+                ),
+                "ton approve fail"
+            );
+        }
         IIL1Bridge(l1Bridge).depositERC20To(
-            l1Token,
+            ton,
+            l2Token,
+            msg.sender,
+            tonAmount,
+            l2gas,
+            data
+        );
+    }
+
+    //2. approve or permit을 받고 L1 TON -> L2 TON
+    //depositAmount = TONAmount
+    function TONDeposit(
+        uint256 depositAmount,
+        uint32 l2gas,
+        bytes calldata data
+    ) external {
+        uint256 allowanceAmount = IERC20(ton).allowance(msg.sender, address(this));
+        console.log(allowanceAmount);
+        console.log("-----------");
+        console.log(depositAmount);
+        require(allowanceAmount >= depositAmount, "wton exceeds allowance");
+        IERC20(ton).safeTransferFrom(msg.sender,address(this),depositAmount);
+        uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
+        if(depositAmount > allowAmount) {
+            require(
+                IERC20(ton).approve(
+                    l1Bridge,
+                    type(uint256).max
+                ),
+                "ton approve fail"
+            );
+        }
+        IIL1Bridge(l1Bridge).depositERC20To(
+            ton,
             l2Token,
             msg.sender,
             depositAmount,
@@ -75,7 +150,87 @@ contract BridgeSwap {
         );
     }
 
+
+    //1.의 internal 함수
+    function _WTONDeposit(
+        address sender,
+        uint256 depositAmount,
+        uint32 l2gas
+    ) internal {
+        uint256 tonAmount = _toWAD(depositAmount);
+        uint256 allowanceAmount = IERC20(wton).allowance(sender, address(this));
+        console.log(allowanceAmount);
+        console.log("-----------");
+        console.log(depositAmount);
+        require(allowanceAmount >= depositAmount, "wton exceeds allowance");
+        IERC20(wton).safeTransferFrom(sender,address(this),depositAmount);
+        IIWTON(wton).swapToTON(depositAmount);
+        uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
+        //내가 넣는 TONAmount 보다 allow된게 더 작으면 추가로 approve를 받아야함 
+        if(tonAmount > allowAmount) {
+            require(
+                IERC20(ton).approve(
+                    l1Bridge,
+                    type(uint256).max
+                ),
+                "ton approve fail"
+            );
+        }
+        IIL1Bridge(l1Bridge).depositERC20To(
+            ton,
+            l2Token,
+            sender,
+            tonAmount,
+            l2gas,
+            basicData
+        );
+    }
+
+
+    function _TONDeposit(
+        address sender,
+        uint256 depositAmount,
+        uint32 l2gas
+    ) internal {
+        uint256 allowanceAmount = IERC20(ton).allowance(sender, address(this));
+        console.log(allowanceAmount);
+        console.log("-----------");
+        console.log(depositAmount);
+        require(allowanceAmount >= depositAmount, "wton exceeds allowance");
+        IERC20(ton).safeTransferFrom(sender,address(this),depositAmount);
+        uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
+        if(depositAmount > allowAmount) {
+            require(
+                IERC20(ton).approve(
+                    l1Bridge,
+                    type(uint256).max
+                ),
+                "ton approve fail"
+            );
+        }
+        IIL1Bridge(l1Bridge).depositERC20To(
+            ton,
+            l2Token,
+            sender,
+            depositAmount,
+            l2gas,
+            basicData
+        );
+    }
+
+    function _toWAD(uint256 v) internal pure returns (uint256) {
+        return v / 10 ** 9;
+    }
+
     function _toRAY(uint256 v) internal pure returns (uint256) {
         return v * 10 ** 9;
+    }
+
+    function _decodeApproveData(
+        bytes memory data
+    ) internal pure returns (uint32 approveData) {
+        assembly {
+            approveData := mload(add(data, 0x20))
+        }
     }
 }

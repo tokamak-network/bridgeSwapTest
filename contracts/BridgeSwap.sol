@@ -65,7 +65,7 @@ contract BridgeSwap is OnApprove {
     ) external override returns (bool) {
         require(msg.sender == address(ton) || msg.sender == address(wton), "only TON and WTON");
         (uint32 l2gas, bytes memory data1) = _decodeApproveData(data);
-        
+
         if(msg.sender == address(ton)) {
             _TONDeposit(
                 sender,
@@ -226,6 +226,8 @@ contract BridgeSwap is OnApprove {
     function _decodeApproveData(
         bytes memory data
     ) public pure returns (uint32 gasAmount, bytes memory data1) {
+        require(data.length == 0x40);
+        
         assembly {
             gasAmount := mload(add(data, 0x20))
             data1 := mload(add(data, 0x40))

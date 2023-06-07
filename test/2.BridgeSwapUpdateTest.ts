@@ -26,6 +26,7 @@ describe("BridgeSwapTest", function () {
   let l1BridgeAddress = "0x7377F3D0F64d7a54Cf367193eb74a052ff8578FD"
   let l2Gas = 1300000
   let data = "0x"
+  let bytesData = "00"
 
   let depositAmount = ethers.utils.parseUnits("1", 18);
   let WTONamount1 = ethers.utils.parseUnits("1", 27);
@@ -107,13 +108,28 @@ describe("BridgeSwapTest", function () {
         expect(allowanceAmount).to.be.equal(0)
         let data1 = padLeft(l2Gas.toString(16), 64);
         let data2 = "0x" + data1;
+        let data3 = padLeft(bytesData, 64);
+        console.log(data3);
+        let data4 = data2 + data3;
+        console.log(data4);
         // console.log("length : ", data2.length);
         // console.log(data1)
         // console.log(data2)
         let beforeWTON = await wtonContract.balanceOf(testAccount.address)
-        await wtonContract.connect(testAccount).approveAndCall(BridgeSwapContract.address, WTONamount1, data2);
+        await wtonContract.connect(testAccount).approveAndCall(BridgeSwapContract.address, WTONamount1, data4);
         let afterWTON = await wtonContract.balanceOf(testAccount.address)
         expect(beforeWTON).to.be.gt(afterWTON);
+      })
+
+      it("decodeTest", async () => {
+        let data1 = padLeft(l2Gas.toString(16), 64);
+        let data2 = "0x" + data1;
+        let data3 = padLeft(bytesData, 64);
+        console.log(data3);
+        let data4 = data2 + data3;
+        console.log(data4);
+        let tx = await BridgeSwapContract.connect(testAccount)._decodeApproveData(data4);
+        console.log(tx)
       })
     })
 
@@ -151,11 +167,15 @@ describe("BridgeSwapTest", function () {
         expect(allowanceAmount).to.be.equal(0)
         let data1 = padLeft(l2Gas.toString(16), 64);
         let data2 = "0x" + data1;
+        let data3 = padLeft(bytesData, 64);
+        console.log(data3);
+        let data4 = data2 + data3;
+        console.log(data4);
         // console.log("length : ", data2.length);
         // console.log(data1)
         // console.log(data2)
         let beforeTON = await tonContract.balanceOf(testAccount.address)
-        await tonContract.connect(testAccount).approveAndCall(BridgeSwapContract.address, TONamount1, data2);
+        await tonContract.connect(testAccount).approveAndCall(BridgeSwapContract.address, TONamount1, data4);
         let afterTON = await tonContract.balanceOf(testAccount.address)
         expect(beforeTON).to.be.gt(afterTON);
       })

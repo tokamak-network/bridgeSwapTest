@@ -64,23 +64,21 @@ contract BridgeSwap is OnApprove {
         bytes calldata data
     ) external override returns (bool) {
         require(msg.sender == address(ton) || msg.sender == address(wton), "only TON and WTON");
-        uint32 l2gas = _decodeApproveData(data);
-        console.log("l2gas : ",l2gas);
-        // uint32 l2gas2 = uint32(l2gas);
-        // console.log("l2gas2 : ",l2gas2);
+        (uint32 l2gas, bytes memory data1) = _decodeApproveData(data);
+        
         if(msg.sender == address(ton)) {
-            console.log("1234");
             _TONDeposit(
                 sender,
                 amount,
-                l2gas
+                l2gas,
+                data1
             );
         } else if (msg.sender == address(wton)) {
-            console.log("123456789");
             _WTONDeposit(
                 sender,
                 amount,
-                l2gas
+                l2gas,
+                data1
             );
         }
 
@@ -94,18 +92,18 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external {
-        console.log("WTON Deposit l2gas : ", l2gas);
-        uint256 allowanceAmount = IERC20(wton).allowance(msg.sender, address(this));
-        console.log(allowanceAmount);
-        console.log("-----------");
-        console.log(depositAmount);
-        require(allowanceAmount >= depositAmount, "wton exceeds allowance");
+        // _WTONDeposit(
+        //     msg.sender,
+        //     depositAmount,
+        //     l2gas,
+        //     data
+        // );
+        require(IERC20(wton).allowance(msg.sender, address(this)) >= depositAmount, "wton exceeds allowance");
         IERC20(wton).safeTransferFrom(msg.sender,address(this),depositAmount);
         IIWTON(wton).swapToTON(depositAmount);
         uint256 tonAmount = _toWAD(depositAmount);
         uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
         if(depositAmount > allowAmount) {
-            console.log("1111111");
             require(
                 IERC20(ton).approve(
                     l1Bridge,
@@ -132,15 +130,10 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external {
-        uint256 allowanceAmount = IERC20(ton).allowance(msg.sender, address(this));
-        console.log(allowanceAmount);
-        console.log("-----------");
-        console.log(depositAmount);
-        require(allowanceAmount >= depositAmount, "ton exceeds allowance");
+        require(IERC20(ton).allowance(msg.sender, address(this)) >= depositAmount, "ton exceeds allowance");
         IERC20(ton).safeTransferFrom(msg.sender,address(this),depositAmount);
         uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
         if(depositAmount > allowAmount) {
-            console.log("222222");
             require(
                 IERC20(ton).approve(
                     l1Bridge,
@@ -164,14 +157,10 @@ contract BridgeSwap is OnApprove {
     function _WTONDeposit(
         address sender,
         uint256 depositAmount,
-        uint32 l2gas
+        uint32 l2gas,
+        bytes memory data
     ) internal {
-        console.log("WTON Deposit l2gas : ", l2gas);
-        uint256 allowanceAmount = IERC20(wton).allowance(sender, address(this));
-        console.log(allowanceAmount);
-        console.log("-----------");
-        console.log(depositAmount);
-        require(allowanceAmount >= depositAmount, "wton exceeds allowance");
+        require(IERC20(wton).allowance(sender, address(this)) >= depositAmount, "wton exceeds allowance");
         IERC20(wton).safeTransferFrom(sender,address(this),depositAmount);
         IIWTON(wton).swapToTON(depositAmount);
         uint256 tonAmount = _toWAD(depositAmount);
@@ -192,7 +181,7 @@ contract BridgeSwap is OnApprove {
             sender,
             tonAmount,
             l2gas,
-            basicData
+            data
         );
     }
 
@@ -201,13 +190,10 @@ contract BridgeSwap is OnApprove {
     function _TONDeposit(
         address sender,
         uint256 depositAmount,
-        uint32 l2gas
+        uint32 l2gas,
+        bytes memory data
     ) internal {
-        uint256 allowanceAmount = IERC20(ton).allowance(sender, address(this));
-        console.log(allowanceAmount);
-        console.log("-----------");
-        console.log(depositAmount);
-        require(allowanceAmount >= depositAmount, "wton exceeds allowance");
+        require(IERC20(ton).allowance(sender, address(this)) >= depositAmount, "ton exceeds allowance");
         IERC20(ton).safeTransferFrom(sender,address(this),depositAmount);
         uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
         if(depositAmount > allowAmount) {
@@ -225,7 +211,7 @@ contract BridgeSwap is OnApprove {
             sender,
             depositAmount,
             l2gas,
-            basicData
+            data
         );
     }
 
@@ -239,9 +225,10 @@ contract BridgeSwap is OnApprove {
 
     function _decodeApproveData(
         bytes memory data
-    ) internal pure returns (uint32 approveData) {
+    ) public pure returns (uint32 gasAmount, bytes memory data1) {
         assembly {
-            approveData := mload(add(data, 0x20))
+            gasAmount := mload(add(data, 0x20))
+            data1 := mload(add(data, 0x40))
         }
     }
 }

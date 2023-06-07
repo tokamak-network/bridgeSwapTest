@@ -65,13 +65,18 @@ contract BridgeSwap is OnApprove {
     ) external override returns (bool) {
         require(msg.sender == address(ton) || msg.sender == address(wton), "only TON and WTON");
         uint32 l2gas = _decodeApproveData(data);
+        console.log("l2gas : ",l2gas);
+        // uint32 l2gas2 = uint32(l2gas);
+        // console.log("l2gas2 : ",l2gas2);
         if(msg.sender == address(ton)) {
+            console.log("1234");
             _TONDeposit(
                 sender,
                 amount,
                 l2gas
             );
         } else if (msg.sender == address(wton)) {
+            console.log("123456789");
             _WTONDeposit(
                 sender,
                 amount,
@@ -89,7 +94,7 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external {
-        uint256 tonAmount = _toWAD(depositAmount);
+        console.log("WTON Deposit l2gas : ", l2gas);
         uint256 allowanceAmount = IERC20(wton).allowance(msg.sender, address(this));
         console.log(allowanceAmount);
         console.log("-----------");
@@ -97,8 +102,10 @@ contract BridgeSwap is OnApprove {
         require(allowanceAmount >= depositAmount, "wton exceeds allowance");
         IERC20(wton).safeTransferFrom(msg.sender,address(this),depositAmount);
         IIWTON(wton).swapToTON(depositAmount);
+        uint256 tonAmount = _toWAD(depositAmount);
         uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
         if(depositAmount > allowAmount) {
+            console.log("1111111");
             require(
                 IERC20(ton).approve(
                     l1Bridge,
@@ -117,6 +124,7 @@ contract BridgeSwap is OnApprove {
         );
     }
 
+
     //2. approve or permit을 받고 L1 TON -> L2 TON
     //depositAmount = TONAmount
     function TONDeposit(
@@ -128,10 +136,11 @@ contract BridgeSwap is OnApprove {
         console.log(allowanceAmount);
         console.log("-----------");
         console.log(depositAmount);
-        require(allowanceAmount >= depositAmount, "wton exceeds allowance");
+        require(allowanceAmount >= depositAmount, "ton exceeds allowance");
         IERC20(ton).safeTransferFrom(msg.sender,address(this),depositAmount);
         uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
         if(depositAmount > allowAmount) {
+            console.log("222222");
             require(
                 IERC20(ton).approve(
                     l1Bridge,
@@ -157,7 +166,7 @@ contract BridgeSwap is OnApprove {
         uint256 depositAmount,
         uint32 l2gas
     ) internal {
-        uint256 tonAmount = _toWAD(depositAmount);
+        console.log("WTON Deposit l2gas : ", l2gas);
         uint256 allowanceAmount = IERC20(wton).allowance(sender, address(this));
         console.log(allowanceAmount);
         console.log("-----------");
@@ -165,6 +174,7 @@ contract BridgeSwap is OnApprove {
         require(allowanceAmount >= depositAmount, "wton exceeds allowance");
         IERC20(wton).safeTransferFrom(sender,address(this),depositAmount);
         IIWTON(wton).swapToTON(depositAmount);
+        uint256 tonAmount = _toWAD(depositAmount);
         uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
         //내가 넣는 TONAmount 보다 allow된게 더 작으면 추가로 approve를 받아야함 
         if(tonAmount > allowAmount) {
@@ -186,7 +196,8 @@ contract BridgeSwap is OnApprove {
         );
     }
 
-
+    
+    //2.의 internal 함수
     function _TONDeposit(
         address sender,
         uint256 depositAmount,

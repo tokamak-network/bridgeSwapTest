@@ -36,6 +36,16 @@ contract BridgeSwap is OnApprove {
 
     bytes basicData;
 
+    event wtonDeposited (
+        address sender,
+        uint256 Amount
+    );
+
+    event tonDeposited (
+        address sender,
+        uint256 Amount
+    );
+
     constructor() {
         IERC20(ton).approve(
             l1Bridge,
@@ -120,6 +130,8 @@ contract BridgeSwap is OnApprove {
             l2gas,
             data
         );
+        
+        emit wtonDeposited(msg.sender, depositAmount);
     }
 
 
@@ -150,6 +162,8 @@ contract BridgeSwap is OnApprove {
             l2gas,
             data
         );
+
+        emit tonDeposited(msg.sender, depositAmount);
     }
 
 
@@ -183,6 +197,8 @@ contract BridgeSwap is OnApprove {
             l2gas,
             data
         );
+
+        emit wtonDeposited(sender, depositAmount);
     }
 
     
@@ -213,6 +229,8 @@ contract BridgeSwap is OnApprove {
             l2gas,
             data
         );
+
+        emit tonDeposited(msg.sender, depositAmount);
     }
 
     function _toWAD(uint256 v) internal pure returns (uint256) {
@@ -227,7 +245,7 @@ contract BridgeSwap is OnApprove {
         bytes memory data
     ) public pure returns (uint32 gasAmount, bytes memory data1) {
         require(data.length == 0x40);
-        
+
         assembly {
             gasAmount := mload(add(data, 0x20))
             data1 := mload(add(data, 0x40))

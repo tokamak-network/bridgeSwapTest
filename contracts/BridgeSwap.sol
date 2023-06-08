@@ -69,13 +69,12 @@ contract BridgeSwap is OnApprove {
 
     /// @notice calling approveAndCall in wton and ton.
     /// @param sender sender is msg.sender requesting approveAndCall.
-    /// @param spender This function is not used.
     /// @param amount If it is called from TONContract, it is TONAmount, and if it is called from WTONContract, it is WTONAmount.
     /// @param data The first 64 digits of data indicate the l2gas value, and the next 64 digits indicate the data value.
     /// @return Whether or not the execution succeeded
     function onApprove(
         address sender,
-        address spender,
+        address,
         uint256 amount,
         bytes calldata data
     ) external override returns (bool) {

@@ -11,8 +11,6 @@ let l1BridgeAddress = "0x7377F3D0F64d7a54Cf367193eb74a052ff8578FD"
 
 let wtonContract: any
 
-let wtonHaveAccount = "0xf0B595d10a92A5a9BC3fFeA7e79f5d266b6035Ea";
-
 async function deployContract() {
 
   const BridgeSwap = await ethers.getContractFactory("BridgeSwap");
@@ -56,8 +54,8 @@ async function executeSwapAndDeposit() {
 
 const main = async () => {
   await deployContract()
-  await initialize()
-  await executeSwapAndDeposit()
+  // await initialize()
+  // await executeSwapAndDeposit()
 }  // main
 
 // We recommend this pattern to be able to use async/await everywhere

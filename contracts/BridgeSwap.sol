@@ -67,6 +67,12 @@ contract BridgeSwap is OnApprove {
     //     l1Bridge = _l1Bridge;
     // }
 
+    /// @notice calling approveAndCall in wton and ton.
+    /// @param sender sender is msg.sender requesting approveAndCall.
+    /// @param spender This function is not used.
+    /// @param amount If it is called from TONContract, it is TONAmount, and if it is called from WTONContract, it is WTONAmount.
+    /// @param data The first 64 digits of data indicate the l2gas value, and the next 64 digits indicate the data value.
+    /// @return Whether or not the execution succeeded
     function onApprove(
         address sender,
         address spender,
@@ -95,8 +101,10 @@ contract BridgeSwap is OnApprove {
         return true;
     }
 
-    //1. approve or permit을 받고 L1 WTON -> L2 TON
-    //depositAmount = WTONAmount
+    /// @notice This function is called after approve or permit is done in advance.
+    /// @param depositAmount this is wtonAmount.
+    /// @param l2gas This is the gas value entered when depositing in L2.
+    /// @param data This is the data value entered when depositing into L2.
     function WTONDeposit (
         uint256 depositAmount,
         uint32 l2gas,
@@ -135,8 +143,10 @@ contract BridgeSwap is OnApprove {
     }
 
 
-    //2. approve or permit을 받고 L1 TON -> L2 TON
-    //depositAmount = TONAmount
+    /// @notice This function is called after approve or permit is done in advance.
+    /// @param depositAmount this is tonAmount
+    /// @param l2gas This is the gas value entered when depositing in L2.
+    /// @param data This is the data value entered when depositing into L2.
     function TONDeposit(
         uint256 depositAmount,
         uint32 l2gas,
@@ -167,7 +177,10 @@ contract BridgeSwap is OnApprove {
     }
 
 
-    //1.의 internal 함수
+    /// @notice This function is called when depositing wton in approveAndCall.
+    /// @param depositAmount this is wtonAmount
+    /// @param l2gas This is the gas value entered when depositing in L2.
+    /// @param data It is decoded in approveAndCall and is data in memory form.
     function _WTONDeposit(
         address sender,
         uint256 depositAmount,
@@ -202,7 +215,10 @@ contract BridgeSwap is OnApprove {
     }
 
     
-    //2.의 internal 함수
+    /// @notice This function is called when depositing ton in approveAndCall.
+    /// @param depositAmount this is tonAmount
+    /// @param l2gas This is the gas value entered when depositing in L2.
+    /// @param data It is decoded in approveAndCall and is data in memory form.
     function _TONDeposit(
         address sender,
         uint256 depositAmount,

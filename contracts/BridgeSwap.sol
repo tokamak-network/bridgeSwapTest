@@ -5,6 +5,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { OnApprove } from "./OnApprove.sol";
 
+import "./libraries/BytesLib.sol";
+
 // Uncomment this line to use console.log
 import "hardhat/console.sol";
 
@@ -25,7 +27,9 @@ interface IIL1Bridge {
 }
 
 contract BridgeSwap is OnApprove {
+    
     using SafeERC20 for IERC20;
+    using BytesLib for bytes;
 
     //goerli address
     address public ton = 0x68c1F9620aeC7F2913430aD6daC1bb16D8444F00;
@@ -80,21 +84,27 @@ contract BridgeSwap is OnApprove {
         bytes calldata data
     ) external override returns (bool) {
         require(msg.sender == address(ton) || msg.sender == address(wton), "only TON and WTON");
-        (uint32 l2gas, bytes memory data1) = _decodeApproveData(data);
+        uint256 len = data.length;
+        console.log("approve len : ",len);
+        bytes memory uintData = data.slice(0,4);
+        uint32 l2GasUsed = uintData.toUint32(0);
+        bytes calldata callData = data[4:]; 
+        console.log("l2GasUsed : ",l2GasUsed);
+        // (uint32 l2gas, bytes memory data1) = _decodeApproveData(data);
 
         if(msg.sender == address(ton)) {
             _TONDeposit(
                 sender,
                 amount,
-                l2gas,
-                data1
+                l2GasUsed,
+                callData
             );
         } else if (msg.sender == address(wton)) {
             _WTONDeposit(
                 sender,
                 amount,
-                l2gas,
-                data1
+                l2GasUsed,
+                callData
             );
         }
 
@@ -185,7 +195,7 @@ contract BridgeSwap is OnApprove {
         address sender,
         uint256 depositAmount,
         uint32 l2gas,
-        bytes memory data
+        bytes calldata data
     ) internal {
         require(IERC20(wton).allowance(sender, address(this)) >= depositAmount, "wton exceeds allowance");
         IERC20(wton).safeTransferFrom(sender,address(this),depositAmount);
@@ -223,7 +233,7 @@ contract BridgeSwap is OnApprove {
         address sender,
         uint256 depositAmount,
         uint32 l2gas,
-        bytes memory data
+        bytes calldata data
     ) internal {
         require(IERC20(ton).allowance(sender, address(this)) >= depositAmount, "ton exceeds allowance");
         IERC20(ton).safeTransferFrom(sender,address(this),depositAmount);
@@ -253,12 +263,12 @@ contract BridgeSwap is OnApprove {
         return v / 10 ** 9;
     }
 
-    function _decodeApproveData(
-        bytes memory data
-    ) public pure returns (uint32 gasAmount, bytes memory data1) {
-        assembly {
-            gasAmount := mload(add(data, 0x20))
-            data1 := mload(add(data, 0x40))
-        }
-    }
+    // function _decodeApproveData(
+    //     bytes memory data
+    // ) public pure returns (uint32 gasAmount, bytes memory data1) {
+    //     assembly {
+    //         gasAmount := mload(add(data, 0x20))
+    //         data1 := mload(add(data, 0x40))
+    //     }
+    // }
 }

@@ -38,8 +38,6 @@ contract BridgeSwap is OnApprove {
     address public l2Token = 0x7c6b91D9Be155A6Db01f749217d76fF02A7227F2;
     address public l1Bridge = 0x7377F3D0F64d7a54Cf367193eb74a052ff8578FD;
 
-    bytes basicData;
-
     event DepositedWTON (
         address sender,
         uint256 wtonAmount,

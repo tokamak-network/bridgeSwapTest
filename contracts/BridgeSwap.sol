@@ -160,28 +160,34 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external {
-        require(IERC20(ton).allowance(msg.sender, address(this)) >= depositAmount, "ton exceeds allowance");
-        IERC20(ton).safeTransferFrom(msg.sender,address(this),depositAmount);
-        uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
-        if(depositAmount > allowAmount) {
-            require(
-                IERC20(ton).approve(
-                    l1Bridge,
-                    type(uint256).max
-                ),
-                "ton approve fail"
-            );
-        }
-        IIL1Bridge(l1Bridge).depositERC20To(
-            ton,
-            l2Token,
+        _TONDeposit(
             msg.sender,
             depositAmount,
             l2gas,
             data
         );
+        // require(IERC20(ton).allowance(msg.sender, address(this)) >= depositAmount, "ton exceeds allowance");
+        // IERC20(ton).safeTransferFrom(msg.sender,address(this),depositAmount);
+        // uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
+        // if(depositAmount > allowAmount) {
+        //     require(
+        //         IERC20(ton).approve(
+        //             l1Bridge,
+        //             type(uint256).max
+        //         ),
+        //         "ton approve fail"
+        //     );
+        // }
+        // IIL1Bridge(l1Bridge).depositERC20To(
+        //     ton,
+        //     l2Token,
+        //     msg.sender,
+        //     depositAmount,
+        //     l2gas,
+        //     data
+        // );
 
-        emit DepostiedTON(msg.sender, depositAmount);
+        // emit DepostiedTON(msg.sender, depositAmount);
     }
 
 

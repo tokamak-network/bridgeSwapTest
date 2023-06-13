@@ -38,12 +38,13 @@ contract BridgeSwap is OnApprove {
 
     event DepositedWTON (
         address sender,
-        uint256 Amount
+        uint256 wtonAmount,
+        uint256 tonAmount
     );
 
     event DepostiedTON (
         address sender,
-        uint256 Amount
+        uint256 tonAmount
     );
 
     constructor() {
@@ -138,7 +139,7 @@ contract BridgeSwap is OnApprove {
             data
         );
         
-        emit DepositedWTON(msg.sender, depositAmount);
+        emit DepositedWTON(msg.sender, depositAmount, tonAmount);
     }
 
 
@@ -210,7 +211,7 @@ contract BridgeSwap is OnApprove {
             data
         );
 
-        emit DepositedWTON(sender, depositAmount);
+        emit DepositedWTON(sender, depositAmount, tonAmount);
     }
 
     

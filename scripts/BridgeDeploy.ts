@@ -31,31 +31,9 @@ async function initialize() {
   console.log("initialize success")
 }
 
-async function executeSwapAndDeposit() {
-  wtonContract = new ethers.Contract(wtonAddress, WTON_ABI.abi, ethers.provider );
-  let depostiAmount = ethers.utils.parseEther("1");
-  let wtonAmount = ethers.utils.parseUnits("1", 27);
-  let l2Gas = 1300000
-  let data = "0x"
-
-
-  let beforeWTON = await wtonContract.balanceOf(wtonHaveAccount)
-  console.log(beforeWTON)
-  await wtonContract.approve(BridgeSwapContract.address, wtonAmount);
-  await BridgeSwapContract.swapAndDeposit(
-    depostiAmount,
-    l2Gas,
-    data
-  )
-
-  let afterWTON = await wtonContract.balanceOf(wtonHaveAccount)
-  console.log(afterWTON)
-}
-
 const main = async () => {
   await deployContract()
   // await initialize()
-  // await executeSwapAndDeposit()
 }  // main
 
 // We recommend this pattern to be able to use async/await everywhere

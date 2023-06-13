@@ -253,15 +253,9 @@ contract BridgeSwap is OnApprove {
         return v / 10 ** 9;
     }
 
-    function _toRAY(uint256 v) internal pure returns (uint256) {
-        return v * 10 ** 9;
-    }
-
     function _decodeApproveData(
         bytes memory data
     ) public pure returns (uint32 gasAmount, bytes memory data1) {
-        require(data.length == 0x40);
-
         assembly {
             gasAmount := mload(add(data, 0x20))
             data1 := mload(add(data, 0x40))

@@ -36,12 +36,12 @@ contract BridgeSwap is OnApprove {
 
     bytes basicData;
 
-    event wtonDeposited (
+    event DepositedWTON (
         address sender,
         uint256 Amount
     );
 
-    event tonDeposited (
+    event DepostiedTON (
         address sender,
         uint256 Amount
     );
@@ -138,7 +138,7 @@ contract BridgeSwap is OnApprove {
             data
         );
         
-        emit wtonDeposited(msg.sender, depositAmount);
+        emit DepositedWTON(msg.sender, depositAmount);
     }
 
 
@@ -172,7 +172,7 @@ contract BridgeSwap is OnApprove {
             data
         );
 
-        emit tonDeposited(msg.sender, depositAmount);
+        emit DepostiedTON(msg.sender, depositAmount);
     }
 
 
@@ -210,7 +210,7 @@ contract BridgeSwap is OnApprove {
             data
         );
 
-        emit wtonDeposited(sender, depositAmount);
+        emit DepositedWTON(sender, depositAmount);
     }
 
     
@@ -245,7 +245,7 @@ contract BridgeSwap is OnApprove {
             data
         );
 
-        emit tonDeposited(msg.sender, depositAmount);
+        emit DepostiedTON(msg.sender, depositAmount);
     }
 
     function _toWAD(uint256 v) internal pure returns (uint256) {

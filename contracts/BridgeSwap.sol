@@ -118,36 +118,13 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external {
+        require(IERC20(wton).allowance(msg.sender, address(this)) >= depositAmount, "wton exceeds allowance");
         _WTONDeposit(
             msg.sender,
             depositAmount,
             l2gas,
             data
         );
-        // require(IERC20(wton).allowance(msg.sender, address(this)) >= depositAmount, "wton exceeds allowance");
-        // IERC20(wton).safeTransferFrom(msg.sender,address(this),depositAmount);
-        // IIWTON(wton).swapToTON(depositAmount);
-        // uint256 tonAmount = _toWAD(depositAmount);
-        // uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
-        // if(tonAmount > allowAmount) {
-        //     require(
-        //         IERC20(ton).approve(
-        //             l1Bridge,
-        //             type(uint256).max
-        //         ),
-        //         "ton approve fail"
-        //     );
-        // }
-        // IIL1Bridge(l1Bridge).depositERC20To(
-        //     ton,
-        //     l2Token,
-        //     msg.sender,
-        //     tonAmount,
-        //     l2gas,
-        //     data
-        // );
-        
-        // emit DepositedWTON(msg.sender, depositAmount, tonAmount);
     }
 
 
@@ -201,7 +178,6 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) internal {
-        require(IERC20(wton).allowance(sender, address(this)) >= depositAmount, "wton exceeds allowance");
         IERC20(wton).safeTransferFrom(sender,address(this),depositAmount);
         IIWTON(wton).swapToTON(depositAmount);
         uint256 tonAmount = _toWAD(depositAmount);

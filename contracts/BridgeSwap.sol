@@ -120,7 +120,7 @@ contract BridgeSwap is OnApprove {
         IIWTON(wton).swapToTON(depositAmount);
         uint256 tonAmount = _toWAD(depositAmount);
         uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
-        if(depositAmount > allowAmount) {
+        if(tonAmount > allowAmount) {
             require(
                 IERC20(ton).approve(
                     l1Bridge,

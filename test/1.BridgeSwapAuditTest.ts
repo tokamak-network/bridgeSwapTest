@@ -12,6 +12,7 @@ describe("BridgeSwapTest", function () {
   let wtonHaveAccount = "0xf0B595d10a92A5a9BC3fFeA7e79f5d266b6035Ea";
 
   let testAccount : any
+  let test1 : any
 
   let BridgeSwapContract: any
 
@@ -36,6 +37,7 @@ describe("BridgeSwapTest", function () {
   let TONamount2 = ethers.utils.parseUnits("2", 18);
 
   before('account setting', async () => {
+    [test1] = await ethers.getSigners();
     testAccount = await ethers.getSigner(wtonHaveAccount)
     await ethers.provider.send("hardhat_impersonateAccount",[wtonHaveAccount]);
     await ethers.provider.send("hardhat_setBalance", [
@@ -62,9 +64,17 @@ describe("BridgeSwapTest", function () {
 
   describe("BridgeSwapTest", () => {
     describe("#1. WTON Deposit Test", () => {
+      it("#1-0. send the WTON", async () => {
+        let beforeWTON = await wtonContract.balanceOf(test1.address);
+        expect(beforeWTON).to.be.equal(0);
+        await wtonContract.connect(testAccount).transfer(test1.address, WTONamount1);
+        let afterWTON = await wtonContract.balanceOf(test1.address);
+        expect(afterWTON).to.be.equal(WTONamount1)
+      })
+
       it("#1-1. WTONDepoist is fail before approve", async () => {
         await expect(
-          BridgeSwapContract.connect(testAccount).WTONDeposit(
+          BridgeSwapContract.connect(test1).WTONDeposit(
             WTONamount1,
             l2Gas,
             data
@@ -73,51 +83,140 @@ describe("BridgeSwapTest", function () {
       })
 
       it("#1-2. WTONDeposit is success after approve", async () => {
-        let beforeWTON = await wtonContract.balanceOf(testAccount.address)
-        // console.log(beforeWTON)
-        await wtonContract.connect(testAccount).approve(BridgeSwapContract.address, WTONamount1);
-        let allowanceAmount = await wtonContract.allowance(testAccount.address,BridgeSwapContract.address);
-        // console.log(allowanceAmount)
-        // console.log(WTONamount1)
+        let beforeWTON = await wtonContract.balanceOf(test1.address)
+        expect(beforeWTON).to.be.equal(WTONamount1)
+        await wtonContract.connect(test1).approve(BridgeSwapContract.address, WTONamount1);
+        let allowanceAmount = await wtonContract.allowance(test1.address,BridgeSwapContract.address);
         expect(allowanceAmount).to.be.equal(WTONamount1);
-        await BridgeSwapContract.connect(testAccount).WTONDeposit(
+        let tx = await BridgeSwapContract.connect(test1).WTONDeposit(
           WTONamount1,
           l2Gas,
           data
         )
-        let afterWTON = await wtonContract.balanceOf(testAccount.address)
-        // console.log(afterWTON)
-        expect(beforeWTON).to.be.gt(afterWTON);
+        const receipt = await tx.wait();
+        // console.log(receipt)
+        // console.log(receipt.events)
+        let evlength = receipt.events.length
+        // console.log(receipt.events[evlength-1].args)
+        let eventWTON = receipt.events[evlength-1].args.wtonAmount;
+        let eventTON = receipt.events[evlength-1].args.tonAmount;
+        let eventSender = receipt.events[evlength-1].args.sender;
+        expect(WTONamount1).to.be.equal(eventWTON)
+        expect(TONamount1).to.be.equal(eventTON)
+        expect(test1.address).to.be.equal(eventSender)
+
+        let afterWTON = await wtonContract.balanceOf(test1.address)
+        expect(afterWTON).to.be.equal(0);
       })
 
       it("#1-3. WTON approveAndCall Test", async () => {
+        await wtonContract.connect(testAccount).transfer(test1.address, WTONamount1);
         const approveData = ethers.utils.solidityPack(
           ["uint32","bytes"],
           [l2Gas,data]
         )
-        console.log("approveData :", approveData);
-        await wtonContract.connect(testAccount).approveAndCall(
+        // console.log("approveData :", approveData);
+        let beforeWTON = await wtonContract.balanceOf(test1.address)
+        expect(beforeWTON).to.be.equal(WTONamount1)
+        let tx = await wtonContract.connect(test1).approveAndCall(
           BridgeSwapContract.address,
           WTONamount1,
           approveData
         )
+
+        const receipt = await tx.wait();
+        let _function ="DepositedWTON(address,uint256,uint256)";
+        let Bridgeinterface = BridgeSwapContract.interface;
+
+        let eventWTON
+        let eventTON
+        let eventSender
+
+        for(let i=0; i< receipt.events.length; i++){
+            if(receipt.events[i].topics[0] == Bridgeinterface.getEventTopic(_function)){
+                // console.log("111111");
+                // console.log(Bridgeinterface.getEventTopic(_function));
+                // console.log(receipt.events[i].topics[0])
+                // console.log("111111");
+                let data = receipt.events[i].data;
+                // console.log("data :",data)
+                let topics = receipt.events[i].topics;
+                // console.log("topics :",topics)
+                let log = Bridgeinterface.parseLog(
+                {  data,  topics } );
+                eventWTON = log.args.wtonAmount;
+                eventTON = log.args.tonAmount;
+                eventSender = log.args.sender;
+            }
+        }
+
+        expect(WTONamount1).to.be.equal(eventWTON)
+        expect(TONamount1).to.be.equal(eventTON)
+        expect(test1.address).to.be.equal(eventSender)
+
+        let afterWTON = await wtonContract.balanceOf(test1.address)
+        expect(afterWTON).to.be.equal(0);
       })
 
       it("#1-4. WTON approveAndCall calldata Test", async () => {
+        await wtonContract.connect(testAccount).transfer(test1.address, WTONamount1);
         const approveData = ethers.utils.solidityPack(
           ["uint32","bytes","bytes"],
           [l2Gas,data,data2]
         )
-        console.log("approveData :", approveData);
-        await wtonContract.connect(testAccount).approveAndCall(
+        let beforeWTON = await wtonContract.balanceOf(test1.address)
+        expect(beforeWTON).to.be.equal(WTONamount1)
+        
+        // console.log("approveData :", approveData);
+        let tx = await wtonContract.connect(test1).approveAndCall(
           BridgeSwapContract.address,
           WTONamount1,
           approveData
         )
+
+        const receipt = await tx.wait();
+        let _function ="DepositedWTON(address,uint256,uint256)";
+        let Bridgeinterface = BridgeSwapContract.interface;
+
+        let eventWTON
+        let eventTON
+        let eventSender
+
+        for(let i=0; i< receipt.events.length; i++){
+            if(receipt.events[i].topics[0] == Bridgeinterface.getEventTopic(_function)){
+                // console.log("111111");
+                // console.log(Bridgeinterface.getEventTopic(_function));
+                // console.log(receipt.events[i].topics[0])
+                // console.log("111111");
+                let data = receipt.events[i].data;
+                // console.log("data :",data)
+                let topics = receipt.events[i].topics;
+                // console.log("topics :",topics)
+                let log = Bridgeinterface.parseLog(
+                {  data,  topics } );
+                eventWTON = log.args.wtonAmount;
+                eventTON = log.args.tonAmount;
+                eventSender = log.args.sender;
+            }
+        }
+        expect(WTONamount1).to.be.equal(eventWTON)
+        expect(TONamount1).to.be.equal(eventTON)
+        expect(test1.address).to.be.equal(eventSender)
+
+        let afterWTON = await wtonContract.balanceOf(test1.address)
+        expect(afterWTON).to.be.equal(0);
       })
     })
 
     describe("#2. TON Deposit Test", () => {
+      it("#2-0. send the WTON", async () => {
+        let beforeTON = await tonContract.balanceOf(test1.address);
+        expect(beforeTON).to.be.equal(0);
+        await tonContract.connect(testAccount).transfer(test1.address, TONamount1);
+        let afterTON = await tonContract.balanceOf(test1.address);
+        expect(afterTON).to.be.equal(TONamount1)
+      })
+
       it("#2-1. TONDeposit is fail before approve", async () => {
         await expect(
           BridgeSwapContract.connect(testAccount).TONDeposit(
@@ -129,40 +228,68 @@ describe("BridgeSwapTest", function () {
       })
 
       it("#2-2. TONDeposit is success after approve", async () => {
-        let beforeTON = await tonContract.balanceOf(testAccount.address)
-        // console.log(beforeWTON)
-        await tonContract.connect(testAccount).approve(BridgeSwapContract.address, TONamount1);
-        let allowanceAmount = await tonContract.allowance(testAccount.address,BridgeSwapContract.address);
-        // console.log(allowanceAmount)
-        // console.log(WTONamount1)
+        let beforeTON = await tonContract.balanceOf(test1.address)
+        expect(beforeTON).to.be.equal(TONamount1)
+        await tonContract.connect(test1).approve(BridgeSwapContract.address, TONamount1);
+        let allowanceAmount = await tonContract.allowance(test1.address,BridgeSwapContract.address);
         expect(allowanceAmount).to.be.equal(TONamount1);
-        await BridgeSwapContract.connect(testAccount).TONDeposit(
+        let tx = await BridgeSwapContract.connect(test1).TONDeposit(
           TONamount1,
           l2Gas,
           data
         )
-        let afterTON = await tonContract.balanceOf(testAccount.address)
-        // console.log(afterWTON)
-        expect(beforeTON).to.be.gt(afterTON);
+
+        const receipt = await tx.wait();
+        // console.log(receipt)
+        // console.log(receipt.events)
+        let evlength = receipt.events.length
+    
+        let eventTON = receipt.events[evlength-1].args.tonAmount;
+        let eventSender = receipt.events[evlength-1].args.sender;
+
+        expect(TONamount1).to.be.equal(eventTON)
+        expect(test1.address).to.be.equal(eventSender)
+
+        let afterTON = await tonContract.balanceOf(test1.address)
+        expect(afterTON).to.be.equal(0)
       })
 
-      // it("#2-3. TONDeposit can approveAndCall", async () => {
-      //   let allowanceAmount = await tonContract.allowance(testAccount.address,BridgeSwapContract.address);
-      //   // expect(allowanceAmount).to.be.equal(0)
-      //   let data1 = padLeft(l2Gas.toString(16), 64);
-      //   let data2 = "0x" + data1;
-      //   let data3 = padLeft(bytesData, 64);
-      //   console.log(data3);
-      //   let data4 = data2 + data3;
-      //   console.log(data4);
-      //   // console.log("length : ", data2.length);
-      //   // console.log(data1)
-      //   // console.log(data2)
-      //   let beforeTON = await tonContract.balanceOf(testAccount.address)
-      //   await tonContract.connect(testAccount).approveAndCall(BridgeSwapContract.address, TONamount1, data4);
-      //   let afterTON = await tonContract.balanceOf(testAccount.address)
-      //   expect(beforeTON).to.be.gt(afterTON);
-      // })
+      it("#2-3. TONDeposit can approveAndCall", async () => {
+        await tonContract.connect(testAccount).transfer(test1.address, TONamount1);
+        const approveData = ethers.utils.solidityPack(
+          ["uint32","bytes","bytes"],
+          [l2Gas,data,data2]
+        )
+        let beforeTON = await tonContract.balanceOf(test1.address)
+        expect(beforeTON).to.be.equal(TONamount1)
+        let tx = await tonContract.connect(test1).approveAndCall(BridgeSwapContract.address, TONamount1, approveData);
+        const receipt = await tx.wait();
+    
+        let _function ="DepositedTON(address,uint256)";
+        let Bridgeinterface = BridgeSwapContract.interface;
+
+        let eventTON
+        let eventSender
+
+        for(let i=0; i< receipt.events.length; i++){
+            if(receipt.events[i].topics[0] == Bridgeinterface.getEventTopic(_function)){
+                let data = receipt.events[i].data;
+                // console.log("data :",data)
+                let topics = receipt.events[i].topics;
+                // console.log("topics :",topics)
+                let log = Bridgeinterface.parseLog(
+                {  data,  topics } );
+                eventTON = log.args.tonAmount;
+                eventSender = log.args.sender;
+            }
+        }
+        
+        expect(TONamount1).to.be.equal(eventTON)
+        expect(test1.address).to.be.equal(eventSender)
+
+        let afterTON = await tonContract.balanceOf(test1.address)
+        expect(afterTON).to.be.equal(0);
+      })
     })
 
   })

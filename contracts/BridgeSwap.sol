@@ -33,11 +33,10 @@ contract BridgeSwap is OnApprove {
     using BytesLib for bytes;
 
     //goerli address
-    address public ton = 0x68c1F9620aeC7F2913430aD6daC1bb16D8444F00;
-    address public wton = 0xe86fCf5213C785AcF9a8BFfEeDEfA9a2199f7Da6;
-    // address public l1Token = 0x68c1F9620aeC7F2913430aD6daC1bb16D8444F00;
-    address public l2Token = 0x7c6b91D9Be155A6Db01f749217d76fF02A7227F2;
-    address public l1Bridge = 0x7377F3D0F64d7a54Cf367193eb74a052ff8578FD;
+    address public ton;
+    address public wton;
+    address public l2Token;
+    address public l1Bridge;
 
     event DepositedWTON (
         address sender,
@@ -50,26 +49,22 @@ contract BridgeSwap is OnApprove {
         uint256 tonAmount
     );
 
-    constructor() {
+    constructor(
+        address _ton,
+        address _wton,
+        address _l2Token,
+        address _l1Bridge
+    ) {
+        ton = _ton;
+        wton = _wton;
+        l2Token = _l2Token;
+        l1Bridge = _l1Bridge;
+
         IERC20(ton).approve(
             l1Bridge,
             type(uint256).max
         );
     }
-
-    // function initialize(
-    //     address _ton,
-    //     address _wton,
-    //     address _l1Token,
-    //     address _l2Token,
-    //     address _l1Bridge
-    // ) external {
-    //     ton = _ton;
-    //     wton = _wton;
-    //     l1Token = _l1Token;
-    //     l2Token = _l2Token;
-    //     l1Bridge = _l1Bridge;
-    // }
 
     /// @notice calling approveAndCall in wton and ton.
     /// @param sender sender is msg.sender requesting approveAndCall.

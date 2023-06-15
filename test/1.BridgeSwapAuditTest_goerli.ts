@@ -65,7 +65,12 @@ describe("BridgeSwapTest", function () {
     it("Deploy the BridgeSwapTest", async function () {
       // We don't use the fixture here because we want a different deployment
       const BridgeSwap = await ethers.getContractFactory("BridgeSwap");
-      BridgeSwapContract = await BridgeSwap.connect(testAccount).deploy();
+      BridgeSwapContract = await BridgeSwap.connect(testAccount).deploy(
+        tonAddress,
+        wtonAddress,
+        l2TokenAddress,
+        l1BridgeAddress
+      );
     });
   });
 

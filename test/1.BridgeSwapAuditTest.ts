@@ -5,6 +5,7 @@ import { ethers } from "hardhat";
 
 const WTON_ABI = require("../abis/WTON.json");
 const TON_ABI = require("../abis/TON.json");
+const L1StandardBridge_ABI = require("../abis/L1StandardBridge.json");
 
 const { padLeft } = require('web3-utils');
 
@@ -18,6 +19,7 @@ describe("BridgeSwapTest", function () {
 
   let wtonContract: any
   let tonContract: any
+  let L1BridgeContract: any
 
   let tonAddress = "0x68c1F9620aeC7F2913430aD6daC1bb16D8444F00";
 
@@ -55,6 +57,10 @@ describe("BridgeSwapTest", function () {
       tonContract = new ethers.Contract(tonAddress, TON_ABI.abi, testAccount );
     })
 
+    it("set L1BrigdeLogic", async () => {
+      L1BridgeContract = new ethers.Contract(l1BridgeAddress, L1StandardBridge_ABI.abi, testAccount)
+    })
+
     it("Deploy the BridgeSwapTest", async function () {
       // We don't use the fixture here because we want a different deployment
       const BridgeSwap = await ethers.getContractFactory("BridgeSwap");
@@ -88,22 +94,48 @@ describe("BridgeSwapTest", function () {
         await wtonContract.connect(test1).approve(BridgeSwapContract.address, WTONamount1);
         let allowanceAmount = await wtonContract.allowance(test1.address,BridgeSwapContract.address);
         expect(allowanceAmount).to.be.equal(WTONamount1);
+        let beforeL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
+        console.log("beforeL1Bridge :", beforeL1Bridge);
         let tx = await BridgeSwapContract.connect(test1).WTONDeposit(
           WTONamount1,
           l2Gas,
           data
         )
         const receipt = await tx.wait();
-        // console.log(receipt)
-        // console.log(receipt.events)
         let evlength = receipt.events.length
-        // console.log(receipt.events[evlength-1].args)
         let eventWTON = receipt.events[evlength-1].args.wtonAmount;
         let eventTON = receipt.events[evlength-1].args.tonAmount;
         let eventSender = receipt.events[evlength-1].args.sender;
         expect(WTONamount1).to.be.equal(eventWTON)
         expect(TONamount1).to.be.equal(eventTON)
         expect(test1.address).to.be.equal(eventSender)
+
+        let _function ="ERC20DepositInitiated(address,address,address,address,uint256,bytes)";
+        let L1Bridgeinterface = L1BridgeContract.interface;
+
+        let l1BridgeEventTo
+        let l1BridgeEventAmount
+        
+        for(let i=0; i< receipt.events.length; i++){
+          if(receipt.events[i].topics[0] == L1Bridgeinterface.getEventTopic(_function)){
+              let data = receipt.events[i].data;
+              // console.log("data :",data)
+              let topics = receipt.events[i].topics;
+              // console.log("topics :",topics)
+              let log = L1Bridgeinterface.parseLog(
+              {  data,  topics } );
+              l1BridgeEventTo = log.args._to;
+              l1BridgeEventAmount = log.args._amount;
+            }
+        }
+
+        expect(l1BridgeEventTo).to.be.equal(test1.address)
+        expect(l1BridgeEventAmount).to.be.equal(TONamount1)
+        let afterL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
+        console.log("afterL1Bridge :",afterL1Bridge)
+        let diffAmount = afterL1Bridge.sub(beforeL1Bridge)
+        console.log("diffAmount :",diffAmount)
+        expect(diffAmount).to.be.equal(TONamount1)
 
         let afterWTON = await wtonContract.balanceOf(test1.address)
         expect(afterWTON).to.be.equal(0);
@@ -118,6 +150,8 @@ describe("BridgeSwapTest", function () {
         // console.log("approveData :", approveData);
         let beforeWTON = await wtonContract.balanceOf(test1.address)
         expect(beforeWTON).to.be.equal(WTONamount1)
+        let beforeL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
+        // console.log("beforeL1Bridge :", beforeL1Bridge);
         let tx = await wtonContract.connect(test1).approveAndCall(
           BridgeSwapContract.address,
           WTONamount1,
@@ -154,6 +188,33 @@ describe("BridgeSwapTest", function () {
         expect(TONamount1).to.be.equal(eventTON)
         expect(test1.address).to.be.equal(eventSender)
 
+        let _function2 ="ERC20DepositInitiated(address,address,address,address,uint256,bytes)";
+        let L1Bridgeinterface = L1BridgeContract.interface;
+
+        let l1BridgeEventTo
+        let l1BridgeEventAmount
+        
+        for(let i=0; i< receipt.events.length; i++){
+          if(receipt.events[i].topics[0] == L1Bridgeinterface.getEventTopic(_function2)){
+              let data = receipt.events[i].data;
+              // console.log("data :",data)
+              let topics = receipt.events[i].topics;
+              // console.log("topics :",topics)
+              let log = L1Bridgeinterface.parseLog(
+              {  data,  topics } );
+              l1BridgeEventTo = log.args._to;
+              l1BridgeEventAmount = log.args._amount;
+            }
+        }
+
+        expect(l1BridgeEventTo).to.be.equal(test1.address)
+        expect(l1BridgeEventAmount).to.be.equal(TONamount1)
+        let afterL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
+        // console.log("afterL1Bridge :",afterL1Bridge)
+        let diffAmount = afterL1Bridge.sub(beforeL1Bridge)
+        console.log("diffAmount :",diffAmount)
+        expect(diffAmount).to.be.equal(TONamount1)
+
         let afterWTON = await wtonContract.balanceOf(test1.address)
         expect(afterWTON).to.be.equal(0);
       })
@@ -166,6 +227,9 @@ describe("BridgeSwapTest", function () {
         )
         let beforeWTON = await wtonContract.balanceOf(test1.address)
         expect(beforeWTON).to.be.equal(WTONamount1)
+
+        let beforeL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
+        // console.log("beforeL1Bridge :", beforeL1Bridge);
         
         // console.log("approveData :", approveData);
         let tx = await wtonContract.connect(test1).approveAndCall(
@@ -202,6 +266,33 @@ describe("BridgeSwapTest", function () {
         expect(WTONamount1).to.be.equal(eventWTON)
         expect(TONamount1).to.be.equal(eventTON)
         expect(test1.address).to.be.equal(eventSender)
+
+        let _function2 ="ERC20DepositInitiated(address,address,address,address,uint256,bytes)";
+        let L1Bridgeinterface = L1BridgeContract.interface;
+
+        let l1BridgeEventTo
+        let l1BridgeEventAmount
+        
+        for(let i=0; i< receipt.events.length; i++){
+          if(receipt.events[i].topics[0] == L1Bridgeinterface.getEventTopic(_function2)){
+              let data = receipt.events[i].data;
+              // console.log("data :",data)
+              let topics = receipt.events[i].topics;
+              // console.log("topics :",topics)
+              let log = L1Bridgeinterface.parseLog(
+              {  data,  topics } );
+              l1BridgeEventTo = log.args._to;
+              l1BridgeEventAmount = log.args._amount;
+            }
+        }
+
+        expect(l1BridgeEventTo).to.be.equal(test1.address)
+        expect(l1BridgeEventAmount).to.be.equal(TONamount1)
+        let afterL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
+        // console.log("afterL1Bridge :",afterL1Bridge)
+        let diffAmount = afterL1Bridge.sub(beforeL1Bridge)
+        console.log("diffAmount :",diffAmount)
+        expect(diffAmount).to.be.equal(TONamount1)
 
         let afterWTON = await wtonContract.balanceOf(test1.address)
         expect(afterWTON).to.be.equal(0);
@@ -233,6 +324,10 @@ describe("BridgeSwapTest", function () {
         await tonContract.connect(test1).approve(BridgeSwapContract.address, TONamount1);
         let allowanceAmount = await tonContract.allowance(test1.address,BridgeSwapContract.address);
         expect(allowanceAmount).to.be.equal(TONamount1);
+        
+        let beforeL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
+        // console.log("beforeL1Bridge :", beforeL1Bridge);
+        
         let tx = await BridgeSwapContract.connect(test1).TONDeposit(
           TONamount1,
           l2Gas,
@@ -250,6 +345,33 @@ describe("BridgeSwapTest", function () {
         expect(TONamount1).to.be.equal(eventTON)
         expect(test1.address).to.be.equal(eventSender)
 
+        let _function2 ="ERC20DepositInitiated(address,address,address,address,uint256,bytes)";
+        let L1Bridgeinterface = L1BridgeContract.interface;
+
+        let l1BridgeEventTo
+        let l1BridgeEventAmount
+        
+        for(let i=0; i< receipt.events.length; i++){
+          if(receipt.events[i].topics[0] == L1Bridgeinterface.getEventTopic(_function2)){
+              let data = receipt.events[i].data;
+              // console.log("data :",data)
+              let topics = receipt.events[i].topics;
+              // console.log("topics :",topics)
+              let log = L1Bridgeinterface.parseLog(
+              {  data,  topics } );
+              l1BridgeEventTo = log.args._to;
+              l1BridgeEventAmount = log.args._amount;
+            }
+        }
+
+        expect(l1BridgeEventTo).to.be.equal(test1.address)
+        expect(l1BridgeEventAmount).to.be.equal(TONamount1)
+        let afterL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
+        // console.log("afterL1Bridge :",afterL1Bridge)
+        let diffAmount = afterL1Bridge.sub(beforeL1Bridge)
+        console.log("diffAmount :",diffAmount)
+        expect(diffAmount).to.be.equal(TONamount1)
+
         let afterTON = await tonContract.balanceOf(test1.address)
         expect(afterTON).to.be.equal(0)
       })
@@ -262,7 +384,15 @@ describe("BridgeSwapTest", function () {
         )
         let beforeTON = await tonContract.balanceOf(test1.address)
         expect(beforeTON).to.be.equal(TONamount1)
-        let tx = await tonContract.connect(test1).approveAndCall(BridgeSwapContract.address, TONamount1, approveData);
+        
+        let beforeL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
+        // console.log("beforeL1Bridge :", beforeL1Bridge);
+        
+        let tx = await tonContract.connect(test1).approveAndCall(
+          BridgeSwapContract.address, 
+          TONamount1, 
+          approveData
+        );
         const receipt = await tx.wait();
     
         let _function ="DepositedTON(address,uint256)";
@@ -286,6 +416,33 @@ describe("BridgeSwapTest", function () {
         
         expect(TONamount1).to.be.equal(eventTON)
         expect(test1.address).to.be.equal(eventSender)
+
+        let _function2 ="ERC20DepositInitiated(address,address,address,address,uint256,bytes)";
+        let L1Bridgeinterface = L1BridgeContract.interface;
+
+        let l1BridgeEventTo
+        let l1BridgeEventAmount
+        
+        for(let i=0; i< receipt.events.length; i++){
+          if(receipt.events[i].topics[0] == L1Bridgeinterface.getEventTopic(_function2)){
+              let data = receipt.events[i].data;
+              // console.log("data :",data)
+              let topics = receipt.events[i].topics;
+              // console.log("topics :",topics)
+              let log = L1Bridgeinterface.parseLog(
+              {  data,  topics } );
+              l1BridgeEventTo = log.args._to;
+              l1BridgeEventAmount = log.args._amount;
+            }
+        }
+
+        expect(l1BridgeEventTo).to.be.equal(test1.address)
+        expect(l1BridgeEventAmount).to.be.equal(TONamount1)
+        let afterL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
+        // console.log("afterL1Bridge :",afterL1Bridge)
+        let diffAmount = afterL1Bridge.sub(beforeL1Bridge)
+        console.log("diffAmount :",diffAmount)
+        expect(diffAmount).to.be.equal(TONamount1)
 
         let afterTON = await tonContract.balanceOf(test1.address)
         expect(afterTON).to.be.equal(0);

@@ -91,14 +91,14 @@ contract BridgeSwap is OnApprove {
         // console.log("l2GasUsed : ",l2GasUsed);
 
         if(msg.sender == address(ton)) {
-            _TONDeposit(
+            _depositTON(
                 sender,
                 amount,
                 l2GasUsed,
                 callData
             );
         } else if (msg.sender == address(wton)) {
-            _WTONDeposit(
+            _depositWTON(
                 sender,
                 amount,
                 l2GasUsed,
@@ -113,13 +113,13 @@ contract BridgeSwap is OnApprove {
     /// @param depositAmount this is wtonAmount.
     /// @param l2gas This is the gas value entered when depositing in L2.
     /// @param data This is the data value entered when depositing into L2.
-    function WTONDeposit (
+    function depositWTON (
         uint256 depositAmount,
         uint32 l2gas,
         bytes calldata data
     ) external {
         require(IERC20(wton).allowance(msg.sender, address(this)) >= depositAmount, "wton exceeds allowance");
-        _WTONDeposit(
+        _depositWTON(
             msg.sender,
             depositAmount,
             l2gas,
@@ -132,13 +132,13 @@ contract BridgeSwap is OnApprove {
     /// @param depositAmount this is tonAmount
     /// @param l2gas This is the gas value entered when depositing in L2.
     /// @param data This is the data value entered when depositing into L2.
-    function TONDeposit(
+    function depositTON(
         uint256 depositAmount,
         uint32 l2gas,
         bytes calldata data
     ) external {
         require(IERC20(ton).allowance(msg.sender, address(this)) >= depositAmount, "ton exceeds allowance");
-        _TONDeposit(
+        _depositTON(
             msg.sender,
             depositAmount,
             l2gas,
@@ -151,7 +151,7 @@ contract BridgeSwap is OnApprove {
     /// @param depositAmount this is wtonAmount
     /// @param l2gas This is the gas value entered when depositing in L2.
     /// @param data It is decoded in approveAndCall and is data in memory form.
-    function _WTONDeposit(
+    function _depositWTON(
         address sender,
         uint256 depositAmount,
         uint32 l2gas,
@@ -189,7 +189,7 @@ contract BridgeSwap is OnApprove {
     /// @param depositAmount this is tonAmount
     /// @param l2gas This is the gas value entered when depositing in L2.
     /// @param data It is decoded in approveAndCall and is data in memory form.
-    function _TONDeposit(
+    function _depositTON(
         address sender,
         uint256 depositAmount,
         uint32 l2gas,

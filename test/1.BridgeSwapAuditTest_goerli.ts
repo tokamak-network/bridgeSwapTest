@@ -27,7 +27,8 @@ describe("BridgeSwapTest", function () {
   let l1TokenAddress = "0x68c1F9620aeC7F2913430aD6daC1bb16D8444F00"
   let l2TokenAddress = "0x7c6b91D9Be155A6Db01f749217d76fF02A7227F2"
   let l1BridgeAddress = "0x7377F3D0F64d7a54Cf367193eb74a052ff8578FD"
-  let l2Gas = 1300000
+  let l2Gas = 200000
+  // let l2Gas = 1300000
   let data = "0x00"
   let data2 = "0x00"
   let bytesData = "00"
@@ -80,7 +81,7 @@ describe("BridgeSwapTest", function () {
 
       it("#1-1. WTONDepoist is fail before approve", async () => {
         await expect(
-          BridgeSwapContract.connect(test1).WTONDeposit(
+          BridgeSwapContract.connect(test1).depositWTON(
             WTONamount1,
             l2Gas,
             data
@@ -96,7 +97,7 @@ describe("BridgeSwapTest", function () {
         expect(allowanceAmount).to.be.equal(WTONamount1);
         let beforeL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
         console.log("beforeL1Bridge :", beforeL1Bridge);
-        let tx = await BridgeSwapContract.connect(test1).WTONDeposit(
+        let tx = await BridgeSwapContract.connect(test1).depositWTON(
           WTONamount1,
           l2Gas,
           data
@@ -310,7 +311,7 @@ describe("BridgeSwapTest", function () {
 
       it("#2-1. TONDeposit is fail before approve", async () => {
         await expect(
-          BridgeSwapContract.connect(testAccount).TONDeposit(
+          BridgeSwapContract.connect(testAccount).depositTON(
             TONamount1,
             l2Gas,
             data
@@ -328,7 +329,7 @@ describe("BridgeSwapTest", function () {
         let beforeL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
         // console.log("beforeL1Bridge :", beforeL1Bridge);
         
-        let tx = await BridgeSwapContract.connect(test1).TONDeposit(
+        let tx = await BridgeSwapContract.connect(test1).depositTON(
           TONamount1,
           l2Gas,
           data

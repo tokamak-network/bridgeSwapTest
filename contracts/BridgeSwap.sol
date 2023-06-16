@@ -32,7 +32,6 @@ contract BridgeSwap is OnApprove {
     using SafeERC20 for IERC20;
     using BytesLib for bytes;
 
-    //goerli address
     address public ton;
     address public wton;
     address public l2Token;
@@ -78,12 +77,9 @@ contract BridgeSwap is OnApprove {
         bytes calldata data
     ) external override returns (bool) {
         require(msg.sender == address(ton) || msg.sender == address(wton), "only TON and WTON");
-        // uint256 len = data.length;
-        // console.log("approve len : ",len);
         bytes memory uintData = data.slice(0,4);
         uint32 l2GasUsed = uintData.toUint32(0);
         bytes calldata callData = data[4:]; 
-        // console.log("l2GasUsed : ",l2GasUsed);
 
         if(msg.sender == address(ton)) {
             _depositTON(
@@ -156,9 +152,7 @@ contract BridgeSwap is OnApprove {
         IERC20(wton).safeTransferFrom(sender,address(this),depositAmount);
         IIWTON(wton).swapToTON(depositAmount);
         uint256 tonAmount = _toWAD(depositAmount);
-        uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
-        //내가 넣는 TONAmount 보다 allow된게 더 작으면 추가로 approve를 받아야함 
-        if(tonAmount > allowAmount) {
+        if(tonAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
             require(
                 IERC20(ton).approve(
                     l1Bridge,
@@ -192,8 +186,7 @@ contract BridgeSwap is OnApprove {
     ) internal {
         require(!Address.isContract(sender),"sender is contract");
         IERC20(ton).safeTransferFrom(sender,address(this),depositAmount);
-        uint256 allowAmount = IERC20(ton).allowance(address(this),l1Bridge);
-        if(depositAmount > allowAmount) {
+        if(depositAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
             require(
                 IERC20(ton).approve(
                     l1Bridge,

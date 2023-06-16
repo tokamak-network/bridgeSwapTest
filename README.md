@@ -1,13 +1,28 @@
-# Sample Hardhat Project
+# BridgeSwap
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
-
-Try running some of the following tasks:
+## Goerli Test
 
 ```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.ts
+npx hardhat test test/1.BridgeSwapAuditTest_goerli.ts
+```
+
+## Mainnet Test
+    
+1. mainnet fork to local
+```shell
+npx hardhat node --fork ~
+```
+
+2. test the local
+```shell
+npx hardhat test test/3.BridgeSwapAuditTest_mainnet.ts --network local
+```
+
+
+## Deploy
+1. check the tokenAddress (what's chain) -> scripts/BridgeDeploy.ts
+
+2. Let's the Deploy
+```shell
+npx hardhat run scripts/BridgeDeploy.ts --network (any chain)
 ```

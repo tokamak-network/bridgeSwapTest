@@ -168,6 +168,7 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external payable {
+        require(!Address.isContract(msg.sender),"sender is contract");
         require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
         IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
         IIWETH(weth).withdraw(depositAmount);
@@ -178,11 +179,6 @@ contract BridgeSwap is OnApprove {
             )
         );
         require(success,"Failed to send Ether");
-        // IIL1Bridge(l1Bridge).depositETHTo(
-        //     msg.sender,
-        //     l2gas,
-        //     data
-        // );
 
         emit DepositWETH(msg.sender, depositAmount);
     }

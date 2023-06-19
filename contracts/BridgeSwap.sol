@@ -163,6 +163,10 @@ contract BridgeSwap is OnApprove {
         );
     }
 
+    /// @notice This function is called after approve or permit is done in advance.
+    /// @param depositAmount this is WETHAmount
+    /// @param l2gas This is the gas value entered when depositing in L2.
+    /// @param data This is the data value entered when depositing into L2.
     function depositWETH(
         uint depositAmount,
         uint32 l2gas,

@@ -17,6 +17,11 @@ interface IIWTON {
     function swapFromTON(uint256 tonAmount) external returns (bool);
 }
 
+interface IIWETH {
+    function withdraw(uint wad) external;
+    function transferFrom(address src, address dst, uint wad) external returns (bool);
+}
+
 interface IIL1Bridge {
     function depositERC20To(
         address _l1Token,
@@ -26,6 +31,12 @@ interface IIL1Bridge {
         uint32 _l2Gas,
         bytes calldata _data
     ) external;
+
+    function depositETHTo(
+        address _to,
+        uint32 _l2Gas,
+        bytes calldata _data
+    ) external payable;
 }
 
 contract BridgeSwap is OnApprove {
@@ -36,6 +47,8 @@ contract BridgeSwap is OnApprove {
     address public wton;
     address public l2Token;
     address public l1Bridge;
+
+    address public weth;
 
     event DepositedWTON (
         address sender,
@@ -48,21 +61,34 @@ contract BridgeSwap is OnApprove {
         uint256 tonAmount
     );
 
+    event DepositWETH (
+        address sender,
+        uint wethAmount
+    );
+
+    event Received(address, uint);
+
     constructor(
         address _ton,
         address _wton,
         address _l2Token,
-        address _l1Bridge
+        address _l1Bridge,
+        address _weth
     ) {
         ton = _ton;
         wton = _wton;
         l2Token = _l2Token;
         l1Bridge = _l1Bridge;
+        weth = _weth;
 
         IERC20(ton).approve(
             l1Bridge,
             type(uint256).max
         );
+    }
+
+    receive() external payable {
+        emit Received(msg.sender, msg.value);
     }
 
     /// @notice calling approveAndCall in wton and ton.
@@ -135,6 +161,30 @@ contract BridgeSwap is OnApprove {
             l2gas,
             data
         );
+    }
+
+    function depositWETH(
+        uint depositAmount,
+        uint32 l2gas,
+        bytes calldata data
+    ) external payable {
+        require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
+        IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
+        IIWETH(weth).withdraw(depositAmount);
+        (bool success,) = address(l1Bridge).call{value: depositAmount}(
+            abi.encodeWithSignature(
+                "depositETHTo(address,uint32,bytes)", 
+                msg.sender,l2gas,data
+            )
+        );
+        require(success,"Failed to send Ether");
+        // IIL1Bridge(l1Bridge).depositETHTo(
+        //     msg.sender,
+        //     l2gas,
+        //     data
+        // );
+
+        emit DepositWETH(msg.sender, depositAmount);
     }
 
 

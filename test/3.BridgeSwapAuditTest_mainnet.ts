@@ -28,6 +28,8 @@ describe("BridgeSwapTest", function () {
   let l2TokenAddress = "0x7c6b91D9Be155A6Db01f749217d76fF02A7227F2" //random Address
   let l1BridgeAddress = "0x59aa194798Ba87D26Ba6bEF80B85ec465F4bbcfD"
 
+  let wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+
   let l2Gas = 200000
   // let l2Gas = 1300000
   let data = "0x00"
@@ -71,7 +73,8 @@ describe("BridgeSwapTest", function () {
         tonAddress,
         wtonAddress,
         l2TokenAddress,
-        l1BridgeAddress
+        l1BridgeAddress,
+        wethAddress
       );
     });
   });

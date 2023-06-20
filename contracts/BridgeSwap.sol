@@ -189,36 +189,6 @@ contract BridgeSwap is OnApprove {
         emit DepositWETH(msg.sender, depositAmount);
     }
 
-    function depositWETHERC20(
-        uint depositAmount,
-        uint32 l2gas,
-        bytes calldata data
-    ) external {
-        require(!Address.isContract(msg.sender),"sender is contract");
-        require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
-        IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
-        if(depositAmount > IERC20(weth).allowance(address(this),l1Bridge)) {
-            require(
-                IERC20(weth).approve(
-                    l1Bridge,
-                    type(uint256).max
-                ),
-                "weth approve fail"
-            );
-        }
-        IIL1Bridge(l1Bridge).depositERC20To(
-            weth,
-            L2weth,
-            msg.sender,
-            depositAmount,
-            l2gas,
-            data
-        );
-
-         emit DepositWETH(msg.sender, depositAmount);
-    }
-
-
     /// @notice This function is called when depositing wton in approveAndCall.
     /// @param depositAmount this is wtonAmount
     /// @param l2gas This is the gas value entered when depositing in L2.

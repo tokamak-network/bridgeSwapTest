@@ -10,7 +10,7 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import "./libraries/BytesLib.sol";
 
 // Uncomment this line to use console.log
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 interface IIWTON {
     function swapToTON(uint256 wtonAmount) external returns (bool);
@@ -47,10 +47,8 @@ contract BridgeSwap is OnApprove {
     address public wton;
     address public l2Token;
     address public l1Bridge;
-
     address public weth;
 
-    address public L2weth = 0x4200000000000000000000000000000000000006;
 
     event DepositedWTON (
         address sender,
@@ -105,7 +103,7 @@ contract BridgeSwap is OnApprove {
         bytes calldata data
     ) external override returns (bool) {
         require(msg.sender == address(ton) || msg.sender == address(wton), "only TON and WTON");
-        bytes memory uintData = data.slice(0,4);
+        bytes memory uintData = data[0:4];
         uint32 l2GasUsed = uintData.toUint32(0);
         bytes calldata callData = data[4:]; 
 

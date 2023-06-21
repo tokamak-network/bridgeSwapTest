@@ -157,6 +157,7 @@ contract BridgeSwap is OnApprove {
         require(IERC20(wton).allowance(msg.sender, address(this)) >= depositAmount, "wton exceeds allowance");
         _depositWTON(
             msg.sender,
+            address(0),
             depositAmount,
             l2gas,
             data
@@ -175,6 +176,7 @@ contract BridgeSwap is OnApprove {
     )   external {
         require(IERC20(wton).allowance(msg.sender, address(this)) >= depositAmount, "wton exceeds allowance");
         _depositWTON(
+            msg.sender,
             to,
             depositAmount,
             l2gas,
@@ -281,37 +283,6 @@ contract BridgeSwap is OnApprove {
     /// @param data It is decoded in approveAndCall and is data in memory form.
     function _depositWTON(
         address sender,
-        uint256 depositAmount,
-        uint32 l2gas,
-        bytes calldata data
-    ) internal {
-        require(!Address.isContract(sender),"sender is contract");
-        IERC20(wton).safeTransferFrom(sender,address(this),depositAmount);
-        IIWTON(wton).swapToTON(depositAmount);
-        uint256 tonAmount = _toWAD(depositAmount);
-        if(tonAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
-            require(
-                IERC20(ton).approve(
-                    l1Bridge,
-                    type(uint256).max
-                ),
-                "ton approve fail"
-            );
-        }
-        IIL1Bridge(l1Bridge).depositERC20To(
-            ton,
-            l2Token,
-            sender,
-            tonAmount,
-            l2gas,
-            data
-        );
-
-        emit DepositedWTON(sender, depositAmount, tonAmount);
-    }
-
-    function _depositWTONTo(
-        address sender,
         address to,
         uint256 depositAmount,
         uint32 l2gas,
@@ -330,17 +301,74 @@ contract BridgeSwap is OnApprove {
                 "ton approve fail"
             );
         }
-        IIL1Bridge(l1Bridge).depositERC20To(
-            ton,
-            l2Token,
-            to,
-            tonAmount,
-            l2gas,
-            data
-        );
+        if(to == address(0)){
+            _depoistERC20To(
+                sender,
+                depositAmount,
+                l2gas,
+                data
+            );
+            // IIL1Bridge(l1Bridge).depositERC20To(
+            //     ton,
+            //     l2Token,
+            //     sender,
+            //     tonAmount,
+            //     l2gas,
+            //     data
+            // );
 
-        emit DepositedWTONTo(sender, to, depositAmount, tonAmount);
+            emit DepositedWTON(sender, depositAmount, tonAmount);
+        } else {
+            _depoistERC20To(
+                to,
+                depositAmount,
+                l2gas,
+                data
+            );
+            // IIL1Bridge(l1Bridge).depositERC20To(
+            //     ton,
+            //     l2Token,
+            //     to,
+            //     tonAmount,
+            //     l2gas,
+            //     data
+            // );
+
+            emit DepositedWTONTo(sender, to, depositAmount, tonAmount);
+        }
     }
+
+    // function _depositWTONTo(
+    //     address sender,
+    //     address to,
+    //     uint256 depositAmount,
+    //     uint32 l2gas,
+    //     bytes calldata data
+    // ) internal {
+    //     require(!Address.isContract(sender),"sender is contract");
+    //     IERC20(wton).safeTransferFrom(sender,address(this),depositAmount);
+    //     IIWTON(wton).swapToTON(depositAmount);
+    //     uint256 tonAmount = _toWAD(depositAmount);
+    //     if(tonAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
+    //         require(
+    //             IERC20(ton).approve(
+    //                 l1Bridge,
+    //                 type(uint256).max
+    //             ),
+    //             "ton approve fail"
+    //         );
+    //     }
+    //     IIL1Bridge(l1Bridge).depositERC20To(
+    //         ton,
+    //         l2Token,
+    //         to,
+    //         tonAmount,
+    //         l2gas,
+    //         data
+    //     );
+
+    //     emit DepositedWTONTo(sender, to, depositAmount, tonAmount);
+    // }
 
     /// @notice This function is called when depositing ton in approveAndCall.
     /// @param sender This is TON from account
@@ -366,55 +394,85 @@ contract BridgeSwap is OnApprove {
             );
         }
         if(to == address(0)){
-            IIL1Bridge(l1Bridge).depositERC20To(
-                ton,
-                l2Token,
+            _depoistERC20To(
                 sender,
                 depositAmount,
                 l2gas,
                 data
             );
+            // IIL1Bridge(l1Bridge).depositERC20To(
+            //     ton,
+            //     l2Token,
+            //     sender,
+            //     depositAmount,
+            //     l2gas,
+            //     data
+            // );
 
             emit DepositedTON(sender, depositAmount);
         } else {
-            IIL1Bridge(l1Bridge).depositERC20To(
-                ton,
-                l2Token,
+            _depoistERC20To(
                 to,
                 depositAmount,
                 l2gas,
                 data
             );
+            // IIL1Bridge(l1Bridge).depositERC20To(
+            //     ton,
+            //     l2Token,
+            //     to,
+            //     depositAmount,
+            //     l2gas,
+            //     data
+            // );
 
             emit DepositedTONTo(sender, to, depositAmount);
         }
     }
 
     
-    /// @notice This function is called when depositing ton in approveAndCall.
-    /// @param sender This is TON from account
-    /// @param to This is get TON L2 account
-    /// @param depositAmount This is tonAmount
-    /// @param l2gas This is the gas value entered when depositing in L2.
-    /// @param data It is decoded in approveAndCall and is data in memory form.
-    function _depositTONTo(
-        address sender,
+    // /// @notice This function is called when depositing ton in approveAndCall.
+    // /// @param sender This is TON from account
+    // /// @param to This is get TON L2 account
+    // /// @param depositAmount This is tonAmount
+    // /// @param l2gas This is the gas value entered when depositing in L2.
+    // /// @param data It is decoded in approveAndCall and is data in memory form.
+    // function _depositTONTo(
+    //     address sender,
+    //     address to,
+    //     uint256 depositAmount,
+    //     uint32 l2gas,
+    //     bytes calldata data
+    // ) internal {
+    //     require(!Address.isContract(sender),"sender is contract");
+    //     IERC20(ton).safeTransferFrom(sender,address(this),depositAmount);
+    //     if(depositAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
+    //         require(
+    //             IERC20(ton).approve(
+    //                 l1Bridge,
+    //                 type(uint256).max
+    //             ),
+    //             "ton approve fail"
+    //         );
+    //     }
+    //     IIL1Bridge(l1Bridge).depositERC20To(
+    //         ton,
+    //         l2Token,
+    //         to,
+    //         depositAmount,
+    //         l2gas,
+    //         data
+    //     );
+
+    //     emit DepositedTONTo(sender, to, depositAmount);
+    // }
+
+    function _depoistERC20To(
         address to,
         uint256 depositAmount,
         uint32 l2gas,
         bytes calldata data
     ) internal {
-        require(!Address.isContract(sender),"sender is contract");
-        IERC20(ton).safeTransferFrom(sender,address(this),depositAmount);
-        if(depositAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
-            require(
-                IERC20(ton).approve(
-                    l1Bridge,
-                    type(uint256).max
-                ),
-                "ton approve fail"
-            );
-        }
         IIL1Bridge(l1Bridge).depositERC20To(
             ton,
             l2Token,
@@ -423,8 +481,6 @@ contract BridgeSwap is OnApprove {
             l2gas,
             data
         );
-
-        emit DepositedTONTo(sender, to, depositAmount);
     }
 
     function _toWAD(uint256 v) internal pure returns (uint256) {

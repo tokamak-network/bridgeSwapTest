@@ -172,6 +172,7 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external payable {
+        require(msg.value == 0, "dont input eth");
         require(!Address.isContract(msg.sender),"sender is contract");
         require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
         IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
@@ -259,4 +260,5 @@ contract BridgeSwap is OnApprove {
     function _toWAD(uint256 v) internal pure returns (uint256) {
         return v / 10 ** 9;
     }
+
 }

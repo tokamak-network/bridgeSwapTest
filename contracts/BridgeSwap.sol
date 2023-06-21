@@ -123,47 +123,37 @@ contract BridgeSwap is OnApprove {
     ) external override returns (bool) {
         require(msg.sender == address(ton) || msg.sender == address(wton), "only TON and WTON");
     
-        address to = data.toAddress(0);
+        address to;
         bytes memory uintData = data[20:24];
         uint32 l2GasUsed = uintData.toUint32(0);
         bytes calldata callData = data[24:]; 
 
         if(msg.sender == address(ton)) {
-            if(to == address(0)){
-                _depositTON(
-                    sender,
-                    address(0),
-                    amount,
-                    l2GasUsed,
-                    callData
-                );
+            if(data.toAddress(0) == address(0)){
+                to = address(0);
             } else {
-                _depositTON(
-                    sender,
-                    to,
-                    amount,
-                    l2GasUsed,
-                    callData
-                );
+                to = data.toAddress(0);
             }
+            _depositTON(
+                sender,
+                to,
+                amount,
+                l2GasUsed,
+                callData
+            );
         } else if (msg.sender == address(wton)) {
-            if(to == address(0)) {
-                _depositWTON(
-                    sender,
-                    address(0),
-                    amount,
-                    l2GasUsed,
-                    callData
-                );
+            if(data.toAddress(0) == address(0)) {
+                to = address(0);
             } else {
-                _depositWTON(
-                    sender,
-                    to,
-                    amount,
-                    l2GasUsed,
-                    callData
-                );
+                to = data.toAddress(0);
             }
+            _depositWTON(
+                sender,
+                to,
+                amount,
+                l2GasUsed,
+                callData
+            );
         }
 
         return true;

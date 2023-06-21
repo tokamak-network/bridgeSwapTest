@@ -122,7 +122,6 @@ contract BridgeSwap is OnApprove {
         bytes calldata data
     ) external override returns (bool) {
         require(msg.sender == address(ton) || msg.sender == address(wton), "only TON and WTON");
-    
         address to;
         bytes memory uintData = data[20:24];
         uint32 l2GasUsed = uintData.toUint32(0);

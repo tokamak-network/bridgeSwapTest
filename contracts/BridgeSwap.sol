@@ -66,6 +66,25 @@ contract BridgeSwap is OnApprove {
         uint wethAmount
     );
 
+    event DepositedWTONTo (
+        address sender,
+        address to,
+        uint256 wtonAmount,
+        uint256 tonAmount
+    );
+
+    event DepositedTONTo (
+        address sender,
+        address to,
+        uint256 tonAmount
+    );
+
+    event DepositWETHTo (
+        address sender,
+        address to,
+        uint wethAmount
+    );
+
     event Received(address, uint);
 
     constructor(
@@ -144,6 +163,25 @@ contract BridgeSwap is OnApprove {
         );
     }
 
+    /// @notice This function is called after approve or permit is done in advance.
+    /// @param depositAmount this is wtonAmount.
+    /// @param l2gas This is the gas value entered when depositing in L2.
+    /// @param data This is the data value entered when depositing into L2.
+    function depositWTONTo(
+        address to,
+        uint256 depositAmount,
+        uint32 l2gas,
+        bytes calldata data
+    )   external {
+        require(IERC20(wton).allowance(msg.sender, address(this)) >= depositAmount, "wton exceeds allowance");
+        _depositWTON(
+            to,
+            depositAmount,
+            l2gas,
+            data
+        );
+    }
+
 
     /// @notice This function is called after approve or permit is done in advance.
     /// @param depositAmount this is tonAmount
@@ -157,6 +195,28 @@ contract BridgeSwap is OnApprove {
         require(IERC20(ton).allowance(msg.sender, address(this)) >= depositAmount, "ton exceeds allowance");
         _depositTON(
             msg.sender,
+            address(0),
+            depositAmount,
+            l2gas,
+            data
+        );
+    }
+
+    /// @notice This function is called after approve or permit is done in advance.
+    /// @param to This address is get TON L2 account
+    /// @param depositAmount this is tonAmount
+    /// @param l2gas This is the gas value entered when depositing in L2.
+    /// @param data This is the data value entered when depositing into L2.
+    function depositTONTo(
+        address to,
+        uint256 depositAmount,
+        uint32 l2gas,
+        bytes calldata data
+    ) external {
+        require(IERC20(ton).allowance(msg.sender, address(this)) >= depositAmount, "ton exceeds allowance");
+        _depositTON(
+            msg.sender,
+            to,
             depositAmount,
             l2gas,
             data
@@ -186,6 +246,33 @@ contract BridgeSwap is OnApprove {
         require(success,"Failed to send Ether");
 
         emit DepositWETH(msg.sender, depositAmount);
+    }
+
+    /// @notice This function is called after approve or permit is done in advance.
+    /// @param to This is get ETH L2Account
+    /// @param depositAmount this is WETHAmount
+    /// @param l2gas This is the gas value entered when depositing in L2.
+    /// @param data This is the data value entered when depositing into L2.
+    function depositWETHTo(
+        address to,
+        uint depositAmount,
+        uint32 l2gas,
+        bytes calldata data
+    ) external payable {
+        require(msg.value == 0, "dont input eth");
+        require(!Address.isContract(msg.sender),"sender is contract");
+        require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
+        IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
+        IIWETH(weth).withdraw(depositAmount);
+        (bool success,) = address(l1Bridge).call{value: depositAmount}(
+            abi.encodeWithSignature(
+                "depositETHTo(address,uint32,bytes)", 
+                to,l2gas,data
+            )
+        );
+        require(success,"Failed to send Ether");
+
+        emit DepositWETHTo(msg.sender, to, depositAmount);
     }
 
     /// @notice This function is called when depositing wton in approveAndCall.
@@ -223,13 +310,96 @@ contract BridgeSwap is OnApprove {
         emit DepositedWTON(sender, depositAmount, tonAmount);
     }
 
-    
+    function _depositWTONTo(
+        address sender,
+        address to,
+        uint256 depositAmount,
+        uint32 l2gas,
+        bytes calldata data
+    ) internal {
+        require(!Address.isContract(sender),"sender is contract");
+        IERC20(wton).safeTransferFrom(sender,address(this),depositAmount);
+        IIWTON(wton).swapToTON(depositAmount);
+        uint256 tonAmount = _toWAD(depositAmount);
+        if(tonAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
+            require(
+                IERC20(ton).approve(
+                    l1Bridge,
+                    type(uint256).max
+                ),
+                "ton approve fail"
+            );
+        }
+        IIL1Bridge(l1Bridge).depositERC20To(
+            ton,
+            l2Token,
+            to,
+            tonAmount,
+            l2gas,
+            data
+        );
+
+        emit DepositedWTONTo(sender, to, depositAmount, tonAmount);
+    }
+
     /// @notice This function is called when depositing ton in approveAndCall.
-    /// @param depositAmount this is tonAmount
+    /// @param sender This is TON from account
+    /// @param depositAmount This is tonAmount
     /// @param l2gas This is the gas value entered when depositing in L2.
     /// @param data It is decoded in approveAndCall and is data in memory form.
     function _depositTON(
         address sender,
+        address to,
+        uint256 depositAmount,
+        uint32 l2gas,
+        bytes calldata data
+    ) internal {
+        require(!Address.isContract(sender),"sender is contract");
+        IERC20(ton).safeTransferFrom(sender,address(this),depositAmount);
+        if(depositAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
+            require(
+                IERC20(ton).approve(
+                    l1Bridge,
+                    type(uint256).max
+                ),
+                "ton approve fail"
+            );
+        }
+        if(to == address(0)){
+            IIL1Bridge(l1Bridge).depositERC20To(
+                ton,
+                l2Token,
+                sender,
+                depositAmount,
+                l2gas,
+                data
+            );
+
+            emit DepositedTON(sender, depositAmount);
+        } else {
+            IIL1Bridge(l1Bridge).depositERC20To(
+                ton,
+                l2Token,
+                to,
+                depositAmount,
+                l2gas,
+                data
+            );
+
+            emit DepositedTONTo(sender, to, depositAmount);
+        }
+    }
+
+    
+    /// @notice This function is called when depositing ton in approveAndCall.
+    /// @param sender This is TON from account
+    /// @param to This is get TON L2 account
+    /// @param depositAmount This is tonAmount
+    /// @param l2gas This is the gas value entered when depositing in L2.
+    /// @param data It is decoded in approveAndCall and is data in memory form.
+    function _depositTONTo(
+        address sender,
+        address to,
         uint256 depositAmount,
         uint32 l2gas,
         bytes calldata data
@@ -248,13 +418,13 @@ contract BridgeSwap is OnApprove {
         IIL1Bridge(l1Bridge).depositERC20To(
             ton,
             l2Token,
-            sender,
+            to,
             depositAmount,
             l2gas,
             data
         );
 
-        emit DepositedTON(sender, depositAmount);
+        emit DepositedTONTo(sender, to, depositAmount);
     }
 
     function _toWAD(uint256 v) internal pure returns (uint256) {

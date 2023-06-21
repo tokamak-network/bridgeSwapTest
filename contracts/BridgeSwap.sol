@@ -10,7 +10,7 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import "./libraries/BytesLib.sol";
 
 // Uncomment this line to use console.log
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 interface IIWTON {
     function swapToTON(uint256 wtonAmount) external returns (bool);
@@ -122,13 +122,20 @@ contract BridgeSwap is OnApprove {
         bytes calldata data
     ) external override returns (bool) {
         require(msg.sender == address(ton) || msg.sender == address(wton), "only TON and WTON");
-        bytes memory uintData = data[0:4];
+        // bytes memory uintData = data[0:4];
+        // uint32 l2GasUsed = uintData.toUint32(0);
+        // bytes calldata callData = data[4:]; 
+
+        address to = data.toAddress(0);
+        console.log("to address :", to);
+        bytes memory uintData = data[20:24];
         uint32 l2GasUsed = uintData.toUint32(0);
-        bytes calldata callData = data[4:]; 
+        bytes calldata callData = data[24:]; 
 
         if(msg.sender == address(ton)) {
             _depositTON(
                 sender,
+                to,
                 amount,
                 l2GasUsed,
                 callData
@@ -136,6 +143,7 @@ contract BridgeSwap is OnApprove {
         } else if (msg.sender == address(wton)) {
             _depositWTON(
                 sender,
+                to,
                 amount,
                 l2GasUsed,
                 callData
@@ -234,12 +242,8 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external payable {
-        // require(msg.value == 0, "dont input eth");
-        // require(!Address.isContract(msg.sender),"sender is contract");
-        // require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
-        // IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
-        // IIWETH(weth).withdraw(depositAmount);
         _checkWETH(depositAmount);
+        IIWETH(weth).withdraw(depositAmount);
         (bool success,) = address(l1Bridge).call{value: depositAmount}(
             abi.encodeWithSignature(
                 "depositETHTo(address,uint32,bytes)", 
@@ -262,12 +266,8 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external payable {
-        // require(msg.value == 0, "dont input eth");
-        // require(!Address.isContract(msg.sender),"sender is contract");
-        // require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
-        // IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
-        // IIWETH(weth).withdraw(depositAmount);
         _checkWETH(depositAmount);
+        IIWETH(weth).withdraw(depositAmount);
         (bool success,) = address(l1Bridge).call{value: depositAmount}(
             abi.encodeWithSignature(
                 "depositETHTo(address,uint32,bytes)", 
@@ -294,15 +294,7 @@ contract BridgeSwap is OnApprove {
         IERC20(wton).safeTransferFrom(sender,address(this),depositAmount);
         IIWTON(wton).swapToTON(depositAmount);
         uint256 tonAmount = _toWAD(depositAmount);
-        if(tonAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
-            require(
-                IERC20(ton).approve(
-                    l1Bridge,
-                    type(uint256).max
-                ),
-                "ton approve fail"
-            );
-        }
+        _checkAllowance(tonAmount);
         if(to == address(0)){
             _depoistERC20To(
                 sender,
@@ -310,14 +302,6 @@ contract BridgeSwap is OnApprove {
                 l2gas,
                 data
             );
-            // IIL1Bridge(l1Bridge).depositERC20To(
-            //     ton,
-            //     l2Token,
-            //     sender,
-            //     tonAmount,
-            //     l2gas,
-            //     data
-            // );
 
             emit DepositedWTON(sender, depositAmount, tonAmount);
         } else {
@@ -327,50 +311,10 @@ contract BridgeSwap is OnApprove {
                 l2gas,
                 data
             );
-            // IIL1Bridge(l1Bridge).depositERC20To(
-            //     ton,
-            //     l2Token,
-            //     to,
-            //     tonAmount,
-            //     l2gas,
-            //     data
-            // );
 
             emit DepositedWTONTo(sender, to, depositAmount, tonAmount);
         }
     }
-
-    // function _depositWTONTo(
-    //     address sender,
-    //     address to,
-    //     uint256 depositAmount,
-    //     uint32 l2gas,
-    //     bytes calldata data
-    // ) internal {
-    //     require(!Address.isContract(sender),"sender is contract");
-    //     IERC20(wton).safeTransferFrom(sender,address(this),depositAmount);
-    //     IIWTON(wton).swapToTON(depositAmount);
-    //     uint256 tonAmount = _toWAD(depositAmount);
-    //     if(tonAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
-    //         require(
-    //             IERC20(ton).approve(
-    //                 l1Bridge,
-    //                 type(uint256).max
-    //             ),
-    //             "ton approve fail"
-    //         );
-    //     }
-    //     IIL1Bridge(l1Bridge).depositERC20To(
-    //         ton,
-    //         l2Token,
-    //         to,
-    //         tonAmount,
-    //         l2gas,
-    //         data
-    //     );
-
-    //     emit DepositedWTONTo(sender, to, depositAmount, tonAmount);
-    // }
 
     /// @notice This function is called when depositing ton in approveAndCall.
     /// @param sender This is TON from account
@@ -386,15 +330,7 @@ contract BridgeSwap is OnApprove {
     ) internal {
         require(!Address.isContract(sender),"sender is contract");
         IERC20(ton).safeTransferFrom(sender,address(this),depositAmount);
-        if(depositAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
-            require(
-                IERC20(ton).approve(
-                    l1Bridge,
-                    type(uint256).max
-                ),
-                "ton approve fail"
-            );
-        }
+        _checkAllowance(depositAmount);
         if(to == address(0)){
             _depoistERC20To(
                 sender,
@@ -402,14 +338,6 @@ contract BridgeSwap is OnApprove {
                 l2gas,
                 data
             );
-            // IIL1Bridge(l1Bridge).depositERC20To(
-            //     ton,
-            //     l2Token,
-            //     sender,
-            //     depositAmount,
-            //     l2gas,
-            //     data
-            // );
 
             emit DepositedTON(sender, depositAmount);
         } else {
@@ -419,55 +347,10 @@ contract BridgeSwap is OnApprove {
                 l2gas,
                 data
             );
-            // IIL1Bridge(l1Bridge).depositERC20To(
-            //     ton,
-            //     l2Token,
-            //     to,
-            //     depositAmount,
-            //     l2gas,
-            //     data
-            // );
 
             emit DepositedTONTo(sender, to, depositAmount);
         }
     }
-
-    
-    // /// @notice This function is called when depositing ton in approveAndCall.
-    // /// @param sender This is TON from account
-    // /// @param to This is get TON L2 account
-    // /// @param depositAmount This is tonAmount
-    // /// @param l2gas This is the gas value entered when depositing in L2.
-    // /// @param data It is decoded in approveAndCall and is data in memory form.
-    // function _depositTONTo(
-    //     address sender,
-    //     address to,
-    //     uint256 depositAmount,
-    //     uint32 l2gas,
-    //     bytes calldata data
-    // ) internal {
-    //     require(!Address.isContract(sender),"sender is contract");
-    //     IERC20(ton).safeTransferFrom(sender,address(this),depositAmount);
-    //     if(depositAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
-    //         require(
-    //             IERC20(ton).approve(
-    //                 l1Bridge,
-    //                 type(uint256).max
-    //             ),
-    //             "ton approve fail"
-    //         );
-    //     }
-    //     IIL1Bridge(l1Bridge).depositERC20To(
-    //         ton,
-    //         l2Token,
-    //         to,
-    //         depositAmount,
-    //         l2gas,
-    //         data
-    //     );
-
-    //     emit DepositedTONTo(sender, to, depositAmount);
-    // }
 
     function _depoistERC20To(
         address to,
@@ -492,7 +375,20 @@ contract BridgeSwap is OnApprove {
         require(!Address.isContract(msg.sender),"sender is contract");
         require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
         IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
-        IIWETH(weth).withdraw(depositAmount);
+    }
+
+    function _checkAllowance(
+        uint256 depositAmount
+    ) internal {
+        if(depositAmount > IERC20(ton).allowance(address(this),l1Bridge)) {
+            require(
+                IERC20(ton).approve(
+                    l1Bridge,
+                    type(uint256).max
+                ),
+                "ton approve fail"
+            );
+        }
     }
 
     function _toWAD(uint256 v) internal pure returns (uint256) {

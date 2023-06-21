@@ -234,11 +234,12 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external payable {
-        require(msg.value == 0, "dont input eth");
-        require(!Address.isContract(msg.sender),"sender is contract");
-        require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
-        IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
-        IIWETH(weth).withdraw(depositAmount);
+        // require(msg.value == 0, "dont input eth");
+        // require(!Address.isContract(msg.sender),"sender is contract");
+        // require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
+        // IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
+        // IIWETH(weth).withdraw(depositAmount);
+        _checkWETH(depositAmount);
         (bool success,) = address(l1Bridge).call{value: depositAmount}(
             abi.encodeWithSignature(
                 "depositETHTo(address,uint32,bytes)", 
@@ -261,11 +262,12 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external payable {
-        require(msg.value == 0, "dont input eth");
-        require(!Address.isContract(msg.sender),"sender is contract");
-        require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
-        IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
-        IIWETH(weth).withdraw(depositAmount);
+        // require(msg.value == 0, "dont input eth");
+        // require(!Address.isContract(msg.sender),"sender is contract");
+        // require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
+        // IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
+        // IIWETH(weth).withdraw(depositAmount);
+        _checkWETH(depositAmount);
         (bool success,) = address(l1Bridge).call{value: depositAmount}(
             abi.encodeWithSignature(
                 "depositETHTo(address,uint32,bytes)", 
@@ -481,6 +483,16 @@ contract BridgeSwap is OnApprove {
             l2gas,
             data
         );
+    }
+
+    function _checkWETH(
+        uint256 depositAmount
+    ) internal {
+        require(msg.value == 0, "dont input eth");
+        require(!Address.isContract(msg.sender),"sender is contract");
+        require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
+        IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
+        IIWETH(weth).withdraw(depositAmount);
     }
 
     function _toWAD(uint256 v) internal pure returns (uint256) {

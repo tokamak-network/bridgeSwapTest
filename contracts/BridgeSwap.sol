@@ -300,7 +300,6 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) internal {
-        require(!Address.isContract(sender),"sender is contract");
         IERC20(wton).safeTransferFrom(sender,address(this),depositAmount);
         IIWTON(wton).swapToTON(depositAmount);
         uint256 tonAmount = _toWAD(depositAmount);
@@ -338,7 +337,6 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) internal {
-        require(!Address.isContract(sender),"sender is contract");
         IERC20(ton).safeTransferFrom(sender,address(this),depositAmount);
         _checkAllowance(depositAmount);
         if(to == address(0)){
@@ -383,7 +381,6 @@ contract BridgeSwap is OnApprove {
     ) internal {
         require(depositAmount > 0, "need input amount");
         require(msg.value == 0, "dont input eth");
-        require(!Address.isContract(msg.sender),"sender is contract");
         require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");
         IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
     }

@@ -163,9 +163,19 @@ describe("BridgeSwapTest", function () {
 
       it("#1-3. WTON approveAndCall Test", async () => {
         await wtonContract.connect(testAccount).transfer(test1.address, WTONamount1);
+        let emptyData = "0x"
+        // const approveData = ethers.utils.solidityPack(
+        //   ["address","uint32","bytes"],
+        //   [address0,l2Gas,emptyData]
+        // )
+        let emptyAddress = "0x"
+        // const approveData = ethers.utils.solidityPack(
+        //   ["uint32","address","bytes"],
+        //   [l2Gas,address0,emptyData]
+        // )
         const approveData = ethers.utils.solidityPack(
-          ["address","uint32","bytes"],
-          [address0,l2Gas,data]
+          ["uint32"],
+          [l2Gas]
         )
         // console.log("approveData :", approveData);
         let beforeWTON = await wtonContract.balanceOf(test1.address)
@@ -235,9 +245,13 @@ describe("BridgeSwapTest", function () {
 
       it("#1-4. WTON approveAndCall calldata Test", async () => {
         await wtonContract.connect(testAccount).transfer(test1.address, WTONamount1);
+        // const approveData = ethers.utils.solidityPack(
+        //   ["address","uint32","bytes","bytes"],
+        //   [address0,l2Gas,data,data2]
+        // )
         const approveData = ethers.utils.solidityPack(
-          ["address","uint32","bytes","bytes"],
-          [address0,l2Gas,data,data2]
+          ["uint32","address","bytes","bytes"],
+          [l2Gas,address0,data,data2]
         )
         let beforeWTON = await wtonContract.balanceOf(test1.address)
         expect(beforeWTON).to.be.equal(WTONamount1)
@@ -388,9 +402,13 @@ describe("BridgeSwapTest", function () {
 
       it("#2-3. TONDeposit can approveAndCall", async () => {
         await tonContract.connect(testAccount).transfer(test1.address, TONamount1);
+        // const approveData = ethers.utils.solidityPack(
+        //   ["address","uint32","bytes","bytes"],
+        //   [address0,l2Gas,data,data2]
+        // )
         const approveData = ethers.utils.solidityPack(
-          ["address","uint32","bytes","bytes"],
-          [address0,l2Gas,data,data2]
+          ["uint32","bytes","bytes"],
+          [l2Gas,data,data2]
         )
         let beforeTON = await tonContract.balanceOf(test1.address)
         expect(beforeTON).to.be.equal(TONamount1)
@@ -639,9 +657,13 @@ describe("BridgeSwapTest", function () {
 
       it("#4-3. WTON approveAndCall Test", async () => {
         await wtonContract.connect(testAccount).transfer(test1.address, WTONamount1);
+        // const approveData = ethers.utils.solidityPack(
+        //   ["address","uint32","bytes"],
+        //   [test2.address,l2Gas,data]
+        // )
         const approveData = ethers.utils.solidityPack(
-          ["address","uint32","bytes"],
-          [test2.address,l2Gas,data]
+          ["uint32","address","bytes"],
+          [l2Gas,test2.address,data]
         )
         // console.log("approveData :", approveData);
         let beforeWTON = await wtonContract.balanceOf(test1.address)
@@ -803,9 +825,13 @@ describe("BridgeSwapTest", function () {
 
       it("#5-3. TONDeposit can approveAndCall", async () => {
         await tonContract.connect(testAccount).transfer(test1.address, TONamount1);
+        // const approveData = ethers.utils.solidityPack(
+        //   ["address","uint32","bytes","bytes"],
+        //   [test2.address,l2Gas,data,data2]
+        // )
         const approveData = ethers.utils.solidityPack(
-          ["address","uint32","bytes","bytes"],
-          [test2.address,l2Gas,data,data2]
+          ["uint32","address","bytes","bytes"],
+          [l2Gas,test2.address,data,data2]
         )
         let beforeTON = await tonContract.balanceOf(test1.address)
         expect(beforeTON).to.be.equal(TONamount1)

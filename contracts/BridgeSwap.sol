@@ -134,15 +134,7 @@ contract BridgeSwap is OnApprove {
                 callData = data[24:];
             }
         }
-        console.log(sender);
-        console.log(to);
-
-        // if(data.toAddress(0) == address(0)) {
-        //     to = address(0);
-        // } else {
-        //     to = data.toAddress(0);
-        // } 
-
+        
         if(msg.sender == address(ton)) {
             _depositTON(
                 sender,
@@ -173,6 +165,7 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external {
+        require(depositAmount > 0, "need input amount");
         require(IERC20(wton).allowance(msg.sender, address(this)) >= depositAmount, "wton exceeds allowance");
         _depositWTON(
             msg.sender,
@@ -193,6 +186,7 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     )   external {
+        require(depositAmount > 0, "need input amount");
         require(to != address(0), "need the toAddress");
         require(IERC20(wton).allowance(msg.sender, address(this)) >= depositAmount, "wton exceeds allowance");
         _depositWTON(
@@ -214,6 +208,7 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external {
+        require(depositAmount > 0, "need input amount");
         require(IERC20(ton).allowance(msg.sender, address(this)) >= depositAmount, "ton exceeds allowance");
         _depositTON(
             msg.sender,
@@ -235,6 +230,7 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external {
+        require(depositAmount > 0, "need input amount");
         require(to != address(0), "need the toAddress");
         require(IERC20(ton).allowance(msg.sender, address(this)) >= depositAmount, "ton exceeds allowance");
         _depositTON(
@@ -385,6 +381,7 @@ contract BridgeSwap is OnApprove {
     function _checkWETH(
         uint256 depositAmount
     ) internal {
+        require(depositAmount > 0, "need input amount");
         require(msg.value == 0, "dont input eth");
         require(!Address.isContract(msg.sender),"sender is contract");
         require(IERC20(weth).allowance(msg.sender, address(this)) >= depositAmount, "weth exceeds allowance");

@@ -321,6 +321,16 @@ describe("BridgeSwapTest", function () {
         let afterWTON = await wtonContract.balanceOf(test1.address)
         expect(afterWTON).to.be.equal(0);
       })
+
+      it("#1-5. if amount is 0, depositWTON is fail", async () => {
+        await expect(
+          BridgeSwapContract.connect(testAccount).depositWTON(
+            0,
+            l2Gas,
+            data
+          )
+        ).to.be.revertedWith("need input amount"); 
+      })
     })
 
     describe("#2. TON Deposit Test", () => {
@@ -475,6 +485,16 @@ describe("BridgeSwapTest", function () {
         let afterTON = await tonContract.balanceOf(test1.address)
         expect(afterTON).to.be.equal(0);
       })
+
+      it("#2-4. if amount is 0, depositTON is fail", async () => {
+        await expect(
+          BridgeSwapContract.connect(testAccount).depositTON(
+            0,
+            l2Gas,
+            data
+          )
+        ).to.be.revertedWith("need input amount"); 
+      })
     })
 
     describe("#3. WETH Deposit", () => {
@@ -572,6 +592,16 @@ describe("BridgeSwapTest", function () {
         let afterWETH = await wethContract.balanceOf(test1.address)
         let diffWETHAmount = beforeWETH.sub(afterWETH)
         expect(diffWETHAmount).to.be.equal(WETHamount1);
+      })
+
+      it("#3-3. if amount is 0, depositWETH is fail", async () => {
+        await expect(
+          BridgeSwapContract.connect(testAccount).depositWETH(
+            0,
+            l2Gas,
+            data
+          )
+        ).to.be.revertedWith("need input amount"); 
       })
     })
 
@@ -749,6 +779,17 @@ describe("BridgeSwapTest", function () {
           )
         ).to.be.revertedWith("need the toAddress"); 
       })
+
+      it("#4-5. if amount is 0, depositWTONTo is fail", async () => {
+        await expect(
+          BridgeSwapContract.connect(testAccount).depositWTONTo(
+            test2.address,
+            0,
+            l2Gas,
+            data
+          )
+        ).to.be.revertedWith("need input amount"); 
+      })
     })
 
     describe("#5. TON DepositTo Test", () => {
@@ -924,6 +965,17 @@ describe("BridgeSwapTest", function () {
           )
         ).to.be.revertedWith("need the toAddress"); 
       })
+
+      it("#5-5. if amount is 0, depositTONTo is fail", async () => {
+        await expect(
+          BridgeSwapContract.connect(testAccount).depositTONTo(
+            test2.address,
+            0,
+            l2Gas,
+            data
+          )
+        ).to.be.revertedWith("need input amount"); 
+      })
     })
 
     describe("#6. WETH DepoitTo Test", () => {
@@ -1038,6 +1090,17 @@ describe("BridgeSwapTest", function () {
             data
           )
         ).to.be.revertedWith("need the toAddress"); 
+      })
+
+      it("#6-4. if amount is 0, depositWETHTo is fail", async () => {
+        await expect(
+          BridgeSwapContract.connect(testAccount).depositWETHTo(
+            test2.address,
+            0,
+            l2Gas,
+            data
+          )
+        ).to.be.revertedWith("need input amount"); 
       })
     })
   })

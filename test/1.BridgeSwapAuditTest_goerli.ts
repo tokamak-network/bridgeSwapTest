@@ -670,6 +670,7 @@ describe("BridgeSwapTest", function () {
         expect(beforeWTON).to.be.equal(WTONamount1)
         let beforeL1Bridge = await tonContract.balanceOf(L1BridgeContract.address)
         // console.log("beforeL1Bridge :", beforeL1Bridge);
+        console.log("test2.address :", test2.address);
         let tx = await wtonContract.connect(test1).approveAndCall(
           BridgeSwapContract.address,
           WTONamount1,
@@ -736,6 +737,17 @@ describe("BridgeSwapTest", function () {
 
         let afterWTON = await wtonContract.balanceOf(test1.address)
         expect(afterWTON).to.be.equal(0);
+      })
+
+      it("#4-4. if address is 0, WTONDepositTo is fail", async () => {
+        await expect(
+          BridgeSwapContract.connect(test1).depositWTONTo(
+            address0,
+            WTONamount1,
+            l2Gas,
+            data
+          )
+        ).to.be.revertedWith("need the toAddress"); 
       })
     })
 
@@ -901,6 +913,17 @@ describe("BridgeSwapTest", function () {
         let afterTON = await tonContract.balanceOf(test1.address)
         expect(afterTON).to.be.equal(0);
       })
+
+      it("#5-4. if address is 0, depositTONTo is fail", async () => {
+        await expect(
+          BridgeSwapContract.connect(test1).depositTONTo(
+            address0,
+            WTONamount1,
+            l2Gas,
+            data
+          )
+        ).to.be.revertedWith("need the toAddress"); 
+      })
     })
 
     describe("#6. WETH DepoitTo Test", () => {
@@ -1004,6 +1027,17 @@ describe("BridgeSwapTest", function () {
         let afterWETH = await wethContract.balanceOf(test1.address)
         let diffWETHAmount = beforeWETH.sub(afterWETH)
         expect(diffWETHAmount).to.be.equal(WETHamount1);
+      })
+
+      it("#6-3. if address is 0, depositWETHTo is fail", async () => {
+        await expect(
+          BridgeSwapContract.connect(test1).depositWETHTo(
+            address0,
+            WTONamount1,
+            l2Gas,
+            data
+          )
+        ).to.be.revertedWith("need the toAddress"); 
       })
     })
   })

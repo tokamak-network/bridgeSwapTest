@@ -194,6 +194,7 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     )   external {
+        require(to != address(0), "need the toAddress");
         require(IERC20(wton).allowance(msg.sender, address(this)) >= depositAmount, "wton exceeds allowance");
         _depositWTON(
             msg.sender,
@@ -235,6 +236,7 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external {
+        require(to != address(0), "need the toAddress");
         require(IERC20(ton).allowance(msg.sender, address(this)) >= depositAmount, "ton exceeds allowance");
         _depositTON(
             msg.sender,
@@ -278,6 +280,7 @@ contract BridgeSwap is OnApprove {
         uint32 l2gas,
         bytes calldata data
     ) external payable {
+        require(to != address(0), "need the toAddress");
         _checkWETH(depositAmount);
         IIWETH(weth).withdraw(depositAmount);
         (bool success,) = address(l1Bridge).call{value: depositAmount}(

@@ -121,11 +121,10 @@ contract BridgeSwap is OnApprove {
         uint256 amount,
         bytes calldata data
     ) external override returns (bool) {
+        require(amount > 0, "need the input amount");
         require(msg.sender == address(ton) || msg.sender == address(wton), "only TON and WTON");
-        console.log(data.length);
         require(data.length >= 4, "need input L2gas");
-        // bytes memory uintData = data[0:4];
-        // uint32 l2GasUsed = uintData.toUint32(0);
+        
         uint32 l2GasUsed = uint32(bytes4(data[0:4]));
         address to;
         bytes calldata callData = data[4:];

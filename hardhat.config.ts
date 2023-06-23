@@ -1,5 +1,12 @@
-import { HardhatUserConfig } from "hardhat/config";
+import { HardhatUserConfig, task } from "hardhat/config";
+import { ethers } from "hardhat";
 import "@nomicfoundation/hardhat-toolbox";
+
+import "./tasks/hello";
+// import "./tasks/balance";
+// import "./tasks/accounts";
+// import "./tasks/wtonApproveAndCall";
+
 
 import dotenv from "dotenv" ;
 dotenv.config();

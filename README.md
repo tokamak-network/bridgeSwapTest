@@ -26,3 +26,21 @@ npx hardhat test test/3.BridgeSwapAuditTest_mainnet.ts --network local
 ```shell
 npx hardhat run scripts/BridgeDeploy.ts --network (any chain)
 ```
+
+
+## Deploy check
+1. check the Storage
+```shell
+npx hardahat run scripts/checkStorage_mainnet.ts --network mainnet
+```
+
+
+## Deploy verify Goerli
+```shell
+npx hardhat verify --constructor-args arguments_goerli.js contract_Address --network goerli
+```
+
+## Deploy verify Mainnet
+```shell
+npx hardhat verify --constructor-args arguments_mainnet.js contract_Address --network mainnet
+```

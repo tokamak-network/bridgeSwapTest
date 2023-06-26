@@ -18,13 +18,17 @@ npx hardhat node --fork ~
 npx hardhat test test/3.BridgeSwapAuditTest_mainnet.ts --network local
 ```
 
-
-## Deploy
-1. check the tokenAddress (what's chain) -> scripts/BridgeDeploy.ts
-
-2. Let's the Deploy
+## Deploy on Goerli
+1. check the tokenAddress -> scripts/BridgeDeploy_goerli.ts
 ```shell
-npx hardhat run scripts/BridgeDeploy.ts --network (any chain)
+npx hardhat run scripts/BridgeDeploy_goerli.ts --network goerli
+```
+
+
+## Deploy on Mainnet
+1. check the tokenAddress -> scripts/BridgeDeploy_mainnet.ts
+```shell
+npx hardhat run scripts/BridgeDeploy_mainnet.ts --network mainnet
 ```
 
 

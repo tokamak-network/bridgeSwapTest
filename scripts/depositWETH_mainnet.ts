@@ -32,7 +32,7 @@ async function depositWETH() {
   console.log("depositWTON approve");
   sleep(12000);
 
-  await BridgeContract.connect(tonHave).depositTON(
+  await BridgeContract.connect(tonHave).depositWETH(
     WETHamount1,
     l2Gas,
     data
@@ -60,7 +60,7 @@ async function depositWETHTo() {
   sleep(12000);
 
   
-  await BridgeContract.connect(tonHave).depositTONTo(
+  await BridgeContract.connect(tonHave).depositWETHTo(
     getAddress,
     WETHamount1,
     l2Gas,

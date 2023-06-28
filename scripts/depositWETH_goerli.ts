@@ -19,7 +19,7 @@ function sleep(ms: any) {
 
 async function depositWETH() {
   const [tonHave] = await ethers.getSigners()
-  let wethContract = new ethers.Contract(wethAddress, WETH_ABI.abi, tonHave );
+  let wethContract = new ethers.Contract(wethAddress, WETH_ABI, tonHave );
   let BridgeContract = new ethers.Contract(BridgeSwapAddress, BRIDGE_ABI.abi, tonHave );
 
   let beforeWETH = await wethContract.balanceOf(tonHave.address);
@@ -46,7 +46,7 @@ async function depositWETH() {
 
 async function depositWETHTo() {
   const [tonHave] = await ethers.getSigners()
-  let wethContract = new ethers.Contract(wethAddress, WETH_ABI.abi, tonHave);  
+  let wethContract = new ethers.Contract(wethAddress, WETH_ABI, tonHave);  
   let BridgeContract = new ethers.Contract(BridgeSwapAddress, BRIDGE_ABI.abi, tonHave );
 
   let beforeWETH = await wethContract.balanceOf(tonHave.address);

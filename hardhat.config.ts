@@ -31,7 +31,9 @@ const config: HardhatUserConfig = {
       url: `http://127.0.0.1:8545/`,
     },
     mainnet: {
-      url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY_MAINNET}`,
+      accounts: [`${process.env.PRIVATE_KEY}`],
+      gasPrice: 20000000000
     },
     goerli: {
       url: `https://eth-goerli.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,

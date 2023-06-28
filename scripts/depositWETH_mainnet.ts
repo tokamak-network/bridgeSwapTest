@@ -3,9 +3,9 @@ const WETH_ABI = require("../abis/WETH.json");
 const BRIDGE_ABI = require("../artifacts/contracts/BridgeSwap.sol/BridgeSwap.json");
 
 let wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
-let BridgeSwapAddress = ""
+let BridgeSwapAddress = "0xA3139764F343f44A7809dA51DC3a34C3d94450d0"
 
-let getAddress = ""
+let getAddress = "0x6E1c4a442E9B9ddA59382ee78058650F1723E0F6"
 
 let WETHamount1 = ethers.utils.parseUnits("1", 16);
 
@@ -19,7 +19,8 @@ function sleep(ms: any) {
 
 async function depositWETH() {
   const [tonHave] = await ethers.getSigners()
-  let wethContract = new ethers.Contract(wethAddress, WETH_ABI.abi, tonHave );
+
+  let wethContract = new ethers.Contract(wethAddress, WETH_ABI, tonHave );
   let BridgeContract = new ethers.Contract(BridgeSwapAddress, BRIDGE_ABI.abi, tonHave );
 
   let beforeWETH = await wethContract.balanceOf(tonHave.address);
@@ -29,7 +30,7 @@ async function depositWETH() {
     BridgeSwapAddress,
     WETHamount1
   )
-  console.log("depositWTON approve");
+  console.log("depositWETH approve");
   sleep(12000);
 
   await BridgeContract.connect(tonHave).depositWETH(
@@ -37,7 +38,7 @@ async function depositWETH() {
     l2Gas,
     data
   )
-  console.log("depositTON finish");
+  console.log("depositWETH finish");
   sleep(12000);
 
   let afterWETH = await wethContract.balanceOf(tonHave.address);
@@ -46,7 +47,7 @@ async function depositWETH() {
 
 async function depositWETHTo() {
   const [tonHave] = await ethers.getSigners()
-  let wethContract = new ethers.Contract(wethAddress, WETH_ABI.abi, tonHave);  
+  let wethContract = new ethers.Contract(wethAddress, WETH_ABI, tonHave);  
   let BridgeContract = new ethers.Contract(BridgeSwapAddress, BRIDGE_ABI.abi, tonHave );
 
   let beforeWETH = await wethContract.balanceOf(tonHave.address);
@@ -56,7 +57,7 @@ async function depositWETHTo() {
     BridgeSwapAddress,
     WETHamount1
   )
-  console.log("depositTON approve");
+  console.log("depositWETHTo approve");
   sleep(12000);
 
   
@@ -66,7 +67,7 @@ async function depositWETHTo() {
     l2Gas,
     data
   )
-  console.log("depositTON finish");
+  console.log("depositWETHTo finish");
   sleep(12000);
 
   let afterWETH = await wethContract.balanceOf(tonHave.address);

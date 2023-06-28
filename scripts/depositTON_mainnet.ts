@@ -5,7 +5,7 @@ const BRIDGE_ABI = require("../artifacts/contracts/BridgeSwap.sol/BridgeSwap.jso
 let tonAddress = "0x2be5e8c109e2197D077D13A82dAead6a9b3433C5"
 let BridgeSwapAddress = ""
 
-let getAddress = ""
+let getAddress = "0x6E1c4a442E9B9ddA59382ee78058650F1723E0F6"
 
 let TONamount1 = ethers.utils.parseUnits("1", 18);
 

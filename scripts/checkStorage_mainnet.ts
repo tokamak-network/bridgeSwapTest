@@ -5,11 +5,11 @@ const BRIDGE_ABI = require("../artifacts/contracts/BridgeSwap.sol/BridgeSwap.jso
 
 let tonAddress = "0x2be5e8c109e2197D077D13A82dAead6a9b3433C5"
 let wtonAddress = "0xc4A11aaf6ea915Ed7Ac194161d2fC9384F15bff2"
-let l2TONAddress = ""
+let l2TONAddress = "0x7c6b91D9Be155A6Db01f749217d76fF02A7227F2"
 let l1standardBridge = "0x59aa194798Ba87D26Ba6bEF80B85ec465F4bbcfD"
 let wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
 
-let BridgeSwapAddress = ""
+let BridgeSwapAddress = "0xA3139764F343f44A7809dA51DC3a34C3d94450d0"
 
 async function checkAddress() {
   const [tonHave] = await ethers.getSigners()

@@ -113,7 +113,7 @@ contract BridgeSwap is OnApprove {
     /// @notice calling approveAndCall in wton and ton.
     /// @param sender sender is msg.sender requesting approveAndCall.
     /// @param amount If it is called from TONContract, it is TONAmount, and if it is called from WTONContract, it is WTONAmount.
-    /// @param data The first 64 digits of data indicate the l2gas value, and the next 64 digits indicate the data value.
+    /// @param data Data is formed in the order of l2gas, address, and bytes calldata. If there is data to be entered into the calldata, when creating the data, the address must also be entered. (If there is no address target, address(0) is entered.)
     /// @return Whether or not the execution succeeded
     function onApprove(
         address sender,
@@ -156,7 +156,7 @@ contract BridgeSwap is OnApprove {
         return true;
     }
 
-    /// @notice This function is called after approve or permit is done in advance.
+    /// @notice This function is deposit WTON from L1 to L2(get TON) in same account.
     /// @param depositAmount this is wtonAmount.
     /// @param l2gas This is the gas value entered when depositing in L2.
     /// @param data This is the data value entered when depositing into L2.
@@ -176,8 +176,9 @@ contract BridgeSwap is OnApprove {
         );
     }
 
-    /// @notice This function is called after approve or permit is done in advance.
-    /// @param depositAmount this is wtonAmount.
+    /// @notice This function is depositTo WTON from L1 to L2(get TON) in another account.
+    /// @param to This is the address to deposit in L2.
+    /// @param depositAmount This is wtonAmount.
     /// @param l2gas This is the gas value entered when depositing in L2.
     /// @param data This is the data value entered when depositing into L2.
     function depositWTONTo(
@@ -199,7 +200,7 @@ contract BridgeSwap is OnApprove {
     }
 
 
-    /// @notice This function is called after approve or permit is done in advance.
+    /// @notice This function is depositTo TON from L1 to L2 in same account.
     /// @param depositAmount this is tonAmount
     /// @param l2gas This is the gas value entered when depositing in L2.
     /// @param data This is the data value entered when depositing into L2.
@@ -219,7 +220,7 @@ contract BridgeSwap is OnApprove {
         );
     }
 
-    /// @notice This function is called after approve or permit is done in advance.
+    /// @notice This function is depositTo TON from L1 to L2 in another account.
     /// @param to This address is get TON L2 account
     /// @param depositAmount this is tonAmount
     /// @param l2gas This is the gas value entered when depositing in L2.
@@ -242,7 +243,7 @@ contract BridgeSwap is OnApprove {
         );
     }
 
-    /// @notice This function is called after approve or permit is done in advance.
+    /// @notice This function is deposit WETH from L1 to L2(get ETH) in same account.
     /// @param depositAmount this is WETHAmount
     /// @param l2gas This is the gas value entered when depositing in L2.
     /// @param data This is the data value entered when depositing into L2.
@@ -264,7 +265,7 @@ contract BridgeSwap is OnApprove {
         emit DepositWETH(msg.sender, depositAmount);
     }
 
-    /// @notice This function is called after approve or permit is done in advance.
+    /// @notice This function is deposit WETH from L1 to L2(get ETH) in another account.
     /// @param to This is get ETH L2Account
     /// @param depositAmount this is WETHAmount
     /// @param l2gas This is the gas value entered when depositing in L2.
@@ -289,10 +290,12 @@ contract BridgeSwap is OnApprove {
         emit DepositWETHTo(msg.sender, to, depositAmount);
     }
 
-    /// @notice This function is called when depositing wton in approveAndCall.
+    /// @notice This function is called when depositing wton.
+    /// @param sender This is WTON from account
+    /// @param to This address is get TON L2 account
     /// @param depositAmount this is wtonAmount
     /// @param l2gas This is the gas value entered when depositing in L2.
-    /// @param data It is decoded in approveAndCall and is data in memory form.
+    /// @param data This is the data value entered when depositing into L2.
     function _depositWTON(
         address sender,
         address to,
@@ -325,11 +328,12 @@ contract BridgeSwap is OnApprove {
         }
     }
 
-    /// @notice This function is called when depositing ton in approveAndCall.
+    /// @notice This function is called when depositing ton.
     /// @param sender This is TON from account
+    /// @param to This address is get TON L2 account
     /// @param depositAmount This is tonAmount
     /// @param l2gas This is the gas value entered when depositing in L2.
-    /// @param data It is decoded in approveAndCall and is data in memory form.
+    /// @param data This is the data value entered when depositing into L2.
     function _depositTON(
         address sender,
         address to,
@@ -360,6 +364,11 @@ contract BridgeSwap is OnApprove {
         }
     }
 
+    /// @notice This function is called when depositTo ton.
+    /// @param to This address is get TON L2 account
+    /// @param depositAmount This is tonAmount
+    /// @param l2gas This is the gas value entered when depositing in L2.
+    /// @param data data is send to l1standardBridge
     function _depoistERC20To(
         address to,
         uint256 depositAmount,
@@ -376,6 +385,8 @@ contract BridgeSwap is OnApprove {
         );
     }
 
+    /// @notice This function is check WETHdeposit condition
+    /// @param depositAmount This is depositAmount
     function _checkWETH(
         uint256 depositAmount
     ) internal {
@@ -385,6 +396,8 @@ contract BridgeSwap is OnApprove {
         IIWETH(weth).transferFrom(msg.sender,address(this), depositAmount);
     }
 
+    /// @notice This function is check TON allowance condition
+    /// @param _depositAmount This is depositAmount
     function _checkAllowance(
         uint256 _depositAmount
     ) internal {
